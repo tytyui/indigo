@@ -86,6 +86,7 @@
 #define FOCUSER_SETTINGS_PROPERTY		PRIVATE_DATA->focuser_settings_property
 #define FOCUSER_SETTINGS_FOCUS_ITEM	(FOCUSER_SETTINGS_PROPERTY->items + 0)
 #define FOCUSER_SETTINGS_BL_ITEM		(FOCUSER_SETTINGS_PROPERTY->items + 1)
+#define FOCUSER_SETTINGS_TEMP_ITEM	(FOCUSER_SETTINGS_PROPERTY->items + 2)
 
 
 extern unsigned short indigo_ccd_simulator_raw_image[];
@@ -114,7 +115,7 @@ typedef struct {
 	double target_temperature, current_temperature;
 	int current_slot;
 	int target_position, current_position, backlash_in, backlash_out;
-	indigo_timer *imager_exposure_timer, *guider_exposure_timer, *dslr_exposure_timer, *file_exposure_timer, *temperature_timer, *guider_timer;
+	indigo_timer *imager_exposure_timer, *guider_exposure_timer, *dslr_exposure_timer, *file_exposure_timer, *temperature_timer, *guider_timer, *focuser_timer;
 	double ao_ra_offset, ao_dec_offset;
 	int eclipse;
 	double guide_rate;
@@ -1262,12 +1263,7 @@ static indigo_result wheel_detach(indigo_device *device) {
 // -------------------------------------------------------------------------------- INDIGO focuser device implementation
 
 static void focuser_timer_callback(indigo_device *device) {
-	if (FOCUSER_POSITION_PROPERTY->state == INDIGO_ALERT_STATE) {
-		FOCUSER_POSITION_ITEM->number.value = PRIVATE_DATA->target_position = PRIVATE_DATA->current_position;
-		indigo_update_property(device, FOCUSER_POSITION_PROPERTY, NULL);
-		FOCUSER_STEPS_PROPERTY->state = INDIGO_ALERT_STATE;
-		indigo_update_property(device, FOCUSER_STEPS_PROPERTY, NULL);
-	} else {
+	if (FOCUSER_POSITION_PROPERTY->state == INDIGO_BUSY_STATE) {
 		if (FOCUSER_DIRECTION_MOVE_OUTWARD_ITEM->sw.value && PRIVATE_DATA->current_position < PRIVATE_DATA->target_position) {
 			FOCUSER_POSITION_PROPERTY->state = INDIGO_BUSY_STATE;
 			int steps = FOCUSER_SPEED_ITEM->number.value;
@@ -1286,7 +1282,7 @@ static void focuser_timer_callback(indigo_device *device) {
 			FOCUSER_STEPS_PROPERTY->state = INDIGO_BUSY_STATE;
 			indigo_update_property(device, FOCUSER_STEPS_PROPERTY, NULL);
 			indigo_update_property(device, FOCUSER_SETTINGS_PROPERTY, NULL);
-			indigo_set_timer(device, 0.1, focuser_timer_callback, NULL);
+			indigo_reschedule_timer(device, 0.1, &PRIVATE_DATA->focuser_timer);
 		} else if (FOCUSER_DIRECTION_MOVE_INWARD_ITEM->sw.value && PRIVATE_DATA->current_position > PRIVATE_DATA->target_position) {
 			FOCUSER_POSITION_PROPERTY->state = INDIGO_BUSY_STATE;
 			int steps = FOCUSER_SPEED_ITEM->number.value;
@@ -1305,18 +1301,34 @@ static void focuser_timer_callback(indigo_device *device) {
 			INDIGO_DRIVER_DEBUG(DRIVER_NAME, "position = %d, focus = %d, backlash_in = %d", (int)FOCUSER_POSITION_ITEM->number.value, (int)FOCUSER_SETTINGS_FOCUS_ITEM->number.value, PRIVATE_DATA->backlash_in);
 			indigo_update_property(device, FOCUSER_STEPS_PROPERTY, NULL);
 			indigo_update_property(device, FOCUSER_SETTINGS_PROPERTY, NULL);
-			indigo_set_timer(device, 0.1, focuser_timer_callback, NULL);
+			indigo_reschedule_timer(device, 0.1, &PRIVATE_DATA->focuser_timer);
 		} else {
 			FOCUSER_POSITION_PROPERTY->state = INDIGO_OK_STATE;
 			FOCUSER_POSITION_ITEM->number.value = PRIVATE_DATA->current_position;
 			indigo_update_property(device, FOCUSER_POSITION_PROPERTY, NULL);
 			FOCUSER_STEPS_PROPERTY->state = INDIGO_OK_STATE;
 			indigo_update_property(device, FOCUSER_STEPS_PROPERTY, NULL);
+			indigo_reschedule_timer(device, 0.1, &PRIVATE_DATA->focuser_timer);
 		}
+	} else {
+		if (FOCUSER_POSITION_PROPERTY->state == INDIGO_ALERT_STATE && FOCUSER_STEPS_PROPERTY->state != INDIGO_ALERT_STATE) {
+			FOCUSER_POSITION_ITEM->number.value = PRIVATE_DATA->target_position = PRIVATE_DATA->current_position;
+			indigo_update_property(device, FOCUSER_POSITION_PROPERTY, NULL);
+			FOCUSER_STEPS_PROPERTY->state = INDIGO_ALERT_STATE;
+			indigo_update_property(device, FOCUSER_STEPS_PROPERTY, NULL);
+		}
+		FOCUSER_TEMPERATURE_ITEM->number.value = FOCUSER_SETTINGS_TEMP_ITEM->number.value;
+		indigo_update_property(device, FOCUSER_TEMPERATURE_PROPERTY, NULL);
+		indigo_reschedule_timer(device, TEMP_UPDATE, &PRIVATE_DATA->focuser_timer);
 	}
 }
 
 static void focuser_connect_callback(indigo_device *device) {
+	if (CONNECTION_CONNECTED_ITEM->sw.value) {
+		indigo_set_timer(device, TEMP_UPDATE, focuser_timer_callback, &PRIVATE_DATA->focuser_timer);
+	} else {
+		indigo_cancel_timer_sync(device, &PRIVATE_DATA->focuser_timer);
+	}
 	CONNECTION_PROPERTY->state = INDIGO_OK_STATE;
 	indigo_focuser_change_property(device, NULL, CONNECTION_PROPERTY);
 }
@@ -1327,9 +1339,10 @@ static indigo_result focuser_attach(indigo_device *device) {
 	assert(device != NULL);
 	assert(PRIVATE_DATA != NULL);
 	if (indigo_focuser_attach(device, DRIVER_NAME, DRIVER_VERSION) == INDIGO_OK) {
-		FOCUSER_SETTINGS_PROPERTY = indigo_init_number_property(NULL, device->name, "FOCUSER_SETUP", MAIN_GROUP, "Focuser Setup", INDIGO_OK_STATE, INDIGO_RW_PERM, 2);
+		FOCUSER_SETTINGS_PROPERTY = indigo_init_number_property(NULL, device->name, "FOCUSER_SETUP", MAIN_GROUP, "Focuser Setup", INDIGO_OK_STATE, INDIGO_RW_PERM, 3);
 		indigo_init_number_item(FOCUSER_SETTINGS_FOCUS_ITEM, "FOCUS", "Focus", FOCUSER_POSITION_ITEM->number.min, FOCUSER_POSITION_ITEM->number.max, 0, 0);
 		indigo_init_number_item(FOCUSER_SETTINGS_BL_ITEM, "BACKLASH", "Backlash", 0, 1000, 0, 0);
+		indigo_init_number_item(FOCUSER_SETTINGS_TEMP_ITEM, "TEMPERATURE", "Temperature", -30, 30, 0, 25);
 		// -------------------------------------------------------------------------------- FOCUSER_SPEED
 		FOCUSER_SPEED_ITEM->number.value = 1;
 		// -------------------------------------------------------------------------------- FOCUSER_POSITION
@@ -1464,6 +1477,8 @@ static indigo_result focuser_change_property(indigo_device *device, indigo_clien
 	} else if (indigo_property_match(FOCUSER_SETTINGS_PROPERTY, property)) {
 		// -------------------------------------------------------------------------------- FOCUSER_SETTINGS
 		indigo_property_copy_values(FOCUSER_SETTINGS_PROPERTY, property, false);
+		FOCUSER_TEMPERATURE_ITEM->number.value = FOCUSER_SETTINGS_TEMP_ITEM->number.value;
+		indigo_update_property(device, FOCUSER_TEMPERATURE_PROPERTY, NULL);
 		FOCUSER_SETTINGS_PROPERTY->state = INDIGO_OK_STATE;
 		indigo_update_property(device, FOCUSER_SETTINGS_PROPERTY, NULL);
 		return INDIGO_OK;
