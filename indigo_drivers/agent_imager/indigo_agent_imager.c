@@ -64,7 +64,8 @@
 #define AGENT_IMAGER_FOCUS_STACK_ITEM					(AGENT_IMAGER_FOCUS_PROPERTY->items+6)
 #define AGENT_IMAGER_FOCUS_REPEAT_ITEM				(AGENT_IMAGER_FOCUS_PROPERTY->items+7)
 #define AGENT_IMAGER_FOCUS_DELAY_ITEM					(AGENT_IMAGER_FOCUS_PROPERTY->items+8)
-#define AGENT_IMAGER_FOCUS_COMPENSATION_ITEM			(AGENT_IMAGER_FOCUS_PROPERTY->items+9)
+#define AGENT_IMAGER_FOCUS_COMPENSATION_ITEM	(AGENT_IMAGER_FOCUS_PROPERTY->items+9)
+#define AGENT_IMAGER_FOCUS_COMPENSATION_TRESHOLD_ITEM	(AGENT_IMAGER_FOCUS_PROPERTY->items+10)
 
 #define AGENT_IMAGER_FOCUS_FAILURE_PROPERTY		(DEVICE_PRIVATE_DATA->agent_imager_focus_failure_property)
 #define AGENT_IMAGER_FOCUS_FAILURE_STOP_ITEM  (AGENT_IMAGER_FOCUS_FAILURE_PROPERTY->items+0)
@@ -1340,8 +1341,11 @@ static void autofocus_process(indigo_device *device) {
 }
 
 static bool compensate(indigo_device *device) {
+	double threshold = AGENT_IMAGER_FOCUS_COMPENSATION_TRESHOLD_ITEM->number.value;
+	if (threshold == 0)
+		return true;
 	int steps_todo = AGENT_IMAGER_FOCUS_COMPENSATION_ITEM->number.value * (DEVICE_PRIVATE_DATA->last_temp - DEVICE_PRIVATE_DATA->initial_temp);
-	if (steps_todo == 0)
+	if (abs(steps_todo) <= threshold)
 		return true;
 	if (DEVICE_PRIVATE_DATA->moved_out && steps_todo < 0 && !DEVICE_PRIVATE_DATA->focuser_has_backlash)
 		steps_todo += AGENT_IMAGER_FOCUS_BACKLASH_ITEM->number.value + AGENT_IMAGER_FOCUS_BACKLASH_OUT_ITEM->number.value;
@@ -1696,7 +1700,7 @@ static indigo_result agent_device_attach(indigo_device *device) {
 		indigo_init_number_item(AGENT_IMAGER_BATCH_EXPOSURE_ITEM, AGENT_IMAGER_BATCH_EXPOSURE_ITEM_NAME, "Exposure time (s)", 0, 0xFFFF, 1, 1);
 		indigo_init_number_item(AGENT_IMAGER_BATCH_DELAY_ITEM, AGENT_IMAGER_BATCH_DELAY_ITEM_NAME, "Delay after each exposure (s)", 0, 0xFFFF, 1, 0);
 		// -------------------------------------------------------------------------------- Focus properties
-		AGENT_IMAGER_FOCUS_PROPERTY = indigo_init_number_property(NULL, device->name, AGENT_IMAGER_FOCUS_PROPERTY_NAME, "Agent", "Autofocus settings", INDIGO_OK_STATE, INDIGO_RW_PERM, 10);
+		AGENT_IMAGER_FOCUS_PROPERTY = indigo_init_number_property(NULL, device->name, AGENT_IMAGER_FOCUS_PROPERTY_NAME, "Agent", "Autofocus settings", INDIGO_OK_STATE, INDIGO_RW_PERM, 11);
 		if (AGENT_IMAGER_FOCUS_PROPERTY == NULL)
 			return INDIGO_FAILED;
 		indigo_init_number_item(AGENT_IMAGER_FOCUS_INITIAL_ITEM, AGENT_IMAGER_FOCUS_INITIAL_ITEM_NAME, "Initial step", 0, 0xFFFF, 1, 20);
@@ -1709,6 +1713,7 @@ static indigo_result agent_device_attach(indigo_device *device) {
 		indigo_init_number_item(AGENT_IMAGER_FOCUS_REPEAT_ITEM, AGENT_IMAGER_FOCUS_REPEAT_ITEM_NAME, "Repeat count", 0, 10, 1, 0);
 		indigo_init_number_item(AGENT_IMAGER_FOCUS_DELAY_ITEM, AGENT_IMAGER_FOCUS_DELAY_ITEM_NAME, "Initial repeat delay (s)", 0, 3600, 1, 0);
 		indigo_init_number_item(AGENT_IMAGER_FOCUS_COMPENSATION_ITEM, AGENT_IMAGER_FOCUS_COMPENSATION_ITEM_NAME, "Compensation (steps/deg)", -1000, 1000, 1, 0);
+		indigo_init_number_item(AGENT_IMAGER_FOCUS_COMPENSATION_TRESHOLD_ITEM, AGENT_IMAGER_FOCUS_COMPENSATION_TRESHOLD_ITEM_NAME, "Compensation threshold (deg)", 0, 10, 1, 0);
 		// -------------------------------------------------------------------------------- Focus failure handling
 		AGENT_IMAGER_FOCUS_FAILURE_PROPERTY = indigo_init_switch_property(NULL, device->name, AGENT_IMAGER_FOCUS_FAILURE_PROPERTY_NAME, "Agent", "On Peak / HFD autofocus failure", INDIGO_OK_STATE, INDIGO_RW_PERM, INDIGO_ONE_OF_MANY_RULE, 2);
 		if (AGENT_IMAGER_FOCUS_FAILURE_PROPERTY == NULL)
