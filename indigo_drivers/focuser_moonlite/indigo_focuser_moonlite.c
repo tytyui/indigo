@@ -23,7 +23,7 @@
  \file indigo_focuser_moonlite.c
  */
 
-#define DRIVER_VERSION 0x0009
+#define DRIVER_VERSION 0x000A
 #define DRIVER_NAME "indigo_focuser_moonlite"
 
 #include <stdlib.h>
@@ -363,6 +363,7 @@ static void focuser_mode_handler(indigo_device *device) {
 	} else {
 		FOCUSER_MODE_PROPERTY->state = INDIGO_ALERT_STATE;
 	}
+	indigo_focuser_configure_mode(device);
 	indigo_update_property(device, FOCUSER_MODE_PROPERTY, NULL);
 	pthread_mutex_unlock(&PRIVATE_DATA->mutex);
 }

@@ -187,6 +187,10 @@ typedef struct {
 	indigo_property *focuser_limits_property;			///< FOCUSER_LIMITS property pointer
 } indigo_focuser_context;
 
+/** Configure properties to RW/RO according the selected mode.
+ */
+extern void indigo_focuser_configure_mode(indigo_device *device);
+
 /** Attach callback function.
  */
 extern indigo_result indigo_focuser_attach(indigo_device *device, const char* driver_name, unsigned version);

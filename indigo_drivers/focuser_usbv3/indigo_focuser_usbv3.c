@@ -23,7 +23,7 @@
  \file indigo_focuser_usbv3.c
  */
 
-#define DRIVER_VERSION 0x0003
+#define DRIVER_VERSION 0x0005
 #define DRIVER_NAME "indigo_focuser_usbv3"
 
 #include <stdlib.h>
@@ -354,7 +354,8 @@ static indigo_result focuser_change_property(indigo_device *device, indigo_clien
 		// -------------------------------------------------------------------------------- FOCUSER_MODE
 	} else if (indigo_property_match(FOCUSER_MODE_PROPERTY, property)) {
 		indigo_property_copy_values(FOCUSER_MODE_PROPERTY, property, false);
-		FOCUSER_MODE_PROPERTY->state = INDIGO_BUSY_STATE;
+		indigo_focuser_configure_mode(device);
+		FOCUSER_MODE_PROPERTY->state = INDIGO_OK_STATE;
 		indigo_update_property(device, FOCUSER_MODE_PROPERTY, NULL);
 		if (FOCUSER_MODE_AUTOMATIC_ITEM->sw.value) {
 			indigo_cancel_timer(device, &PRIVATE_DATA->temperature_timer);

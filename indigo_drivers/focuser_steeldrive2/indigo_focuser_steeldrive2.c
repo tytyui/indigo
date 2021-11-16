@@ -23,7 +23,7 @@
  \file indigo_focuser_steeldrive2.c
  */
 
-#define DRIVER_VERSION 0x000A
+#define DRIVER_VERSION 0x000B
 #define DRIVER_NAME "indigo_focuser_steeldrive2"
 
 #include <stdlib.h>
@@ -688,6 +688,7 @@ static void focuser_mode_handler(indigo_device *device) {
 		sprintf(command, "$BS SET TCOMP:%d", FOCUSER_MODE_AUTOMATIC_ITEM->sw.value ? 1 : 0);
 		if (!steeldrive2_command(device, command, response, sizeof(response)) && !strcmp(response, "$BS OK"))
 			FOCUSER_MODE_PROPERTY->state = INDIGO_ALERT_STATE;
+		indigo_focuser_configure_mode(device);
 		indigo_update_property(device, FOCUSER_MODE_PROPERTY, NULL);
 		pthread_mutex_unlock(&PRIVATE_DATA->mutex);
 	}

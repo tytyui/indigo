@@ -23,7 +23,7 @@
  \file indigo_focuser_optec.c
  */
 
-#define DRIVER_VERSION 0x0005
+#define DRIVER_VERSION 0x0006
 #define DRIVER_NAME "indigo_focuser_optec"
 
 #include <stdlib.h>
@@ -221,23 +221,18 @@ static void focuser_mode_handler(indigo_device *device) {
 		if (indigo_printf(PRIVATE_DATA->handle, "FQUIT1\r\n") && indigo_read_line(PRIVATE_DATA->handle, response, sizeof(response)) > 0 && strcmp(response, "DONE") == 0) {
 			if (indigo_printf(PRIVATE_DATA->handle, "FAMODE\r\n")) {
 				FOCUSER_MODE_PROPERTY->state = INDIGO_OK_STATE;
-				indigo_delete_property(device, FOCUSER_POSITION_PROPERTY, NULL);
-				indigo_delete_property(device, FOCUSER_DIRECTION_PROPERTY, NULL);
-				indigo_delete_property(device, FOCUSER_STEPS_PROPERTY, NULL);
 			}
 		}
 	} else {
 		for (int i = 0; i < 10; i++) {
 			if (indigo_printf(PRIVATE_DATA->handle, "FMMODE\r\n") && indigo_read_line(PRIVATE_DATA->handle, response, sizeof(response)) > 0 && strcmp(response, "!") == 0) {
 				FOCUSER_MODE_PROPERTY->state = INDIGO_OK_STATE;
-				indigo_define_property(device, FOCUSER_POSITION_PROPERTY, NULL);
-				indigo_define_property(device, FOCUSER_DIRECTION_PROPERTY, NULL);
-				indigo_define_property(device, FOCUSER_STEPS_PROPERTY, NULL);
 				break;
 			}
 			indigo_usleep(ONE_SECOND_DELAY);
 		}
 	}
+	indigo_focuser_configure_mode(device);
 	indigo_update_property(device, FOCUSER_MODE_PROPERTY, NULL);
 	pthread_mutex_unlock(&PRIVATE_DATA->mutex);
 }
