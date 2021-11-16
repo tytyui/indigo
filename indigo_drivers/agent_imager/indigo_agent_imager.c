@@ -64,6 +64,7 @@
 #define AGENT_IMAGER_FOCUS_STACK_ITEM					(AGENT_IMAGER_FOCUS_PROPERTY->items+6)
 #define AGENT_IMAGER_FOCUS_REPEAT_ITEM				(AGENT_IMAGER_FOCUS_PROPERTY->items+7)
 #define AGENT_IMAGER_FOCUS_DELAY_ITEM					(AGENT_IMAGER_FOCUS_PROPERTY->items+8)
+#define AGENT_IMAGER_FOCUS_COMPENSATION_ITEM			(AGENT_IMAGER_FOCUS_PROPERTY->items+9)
 
 #define AGENT_IMAGER_FOCUS_FAILURE_PROPERTY		(DEVICE_PRIVATE_DATA->agent_imager_focus_failure_property)
 #define AGENT_IMAGER_FOCUS_FAILURE_STOP_ITEM  (AGENT_IMAGER_FOCUS_FAILURE_PROPERTY->items+0)
@@ -95,7 +96,8 @@
 #define AGENT_IMAGER_START_EXPOSURE_ITEM  		(AGENT_START_PROCESS_PROPERTY->items+1)
 #define AGENT_IMAGER_START_STREAMING_ITEM 		(AGENT_START_PROCESS_PROPERTY->items+2)
 #define AGENT_IMAGER_START_FOCUSING_ITEM 			(AGENT_START_PROCESS_PROPERTY->items+3)
-#define AGENT_IMAGER_START_SEQUENCE_ITEM 			(AGENT_START_PROCESS_PROPERTY->items+4)
+#define AGENT_IMAGER_START_COMPENSATION_ITEM 	(AGENT_START_PROCESS_PROPERTY->items+4)
+#define AGENT_IMAGER_START_SEQUENCE_ITEM 			(AGENT_START_PROCESS_PROPERTY->items+5)
 
 #define AGENT_PAUSE_PROCESS_PROPERTY					(DEVICE_PRIVATE_DATA->agent_pause_process_property)
 #define AGENT_PAUSE_PROCESS_ITEM      				(AGENT_PAUSE_PROCESS_PROPERTY->items+0)
@@ -185,12 +187,15 @@ typedef struct {
 	bool use_hfd_estimator;
 	bool use_rms_estimator;
 	bool use_aux_1;
+	bool moved_out;
+	double initial_temp, last_temp;
 } agent_private_data;
 
 // -------------------------------------------------------------------------------- INDIGO agent common code
 
 static indigo_property_state capture_raw_frame(indigo_device *device);
 static indigo_property_state _capture_raw_frame(indigo_device *device, bool is_restore_frame);
+static bool compensate(indigo_device *device);
 
 static void save_config(indigo_device *device) {
 	if (pthread_mutex_trylock(&DEVICE_CONTEXT->config_mutex) == 0) {
@@ -516,7 +521,7 @@ static void preview_process(indigo_device *device) {
 		indigo_update_property(device, AGENT_ABORT_PROCESS_PROPERTY, NULL);
 	}
 	restore_subframe(device);
-	AGENT_IMAGER_START_PREVIEW_ITEM->sw.value = AGENT_IMAGER_START_EXPOSURE_ITEM->sw.value = AGENT_IMAGER_START_STREAMING_ITEM->sw.value = AGENT_IMAGER_START_FOCUSING_ITEM->sw.value = AGENT_IMAGER_START_SEQUENCE_ITEM->sw.value = false;
+	AGENT_IMAGER_START_PREVIEW_ITEM->sw.value = AGENT_IMAGER_START_EXPOSURE_ITEM->sw.value = AGENT_IMAGER_START_STREAMING_ITEM->sw.value = AGENT_IMAGER_START_FOCUSING_ITEM->sw.value = AGENT_IMAGER_START_COMPENSATION_ITEM->sw.value = AGENT_IMAGER_START_SEQUENCE_ITEM->sw.value = false;
 	AGENT_START_PROCESS_PROPERTY->state = AGENT_IMAGER_STATS_PROPERTY->state = INDIGO_OK_STATE;
 	restore_switch_state(device, INDIGO_FILTER_CCD_INDEX, CCD_UPLOAD_MODE_PROPERTY_NAME, upload_mode);
 	restore_switch_state(device, INDIGO_FILTER_CCD_INDEX, CCD_IMAGE_FORMAT_PROPERTY_NAME, image_format);
@@ -557,6 +562,8 @@ static bool exposure_batch(indigo_device *device) {
 	for (int remaining_exposures = AGENT_IMAGER_BATCH_COUNT_ITEM->number.target; remaining_exposures != 0; remaining_exposures--) {
 		AGENT_IMAGER_STATS_FRAME_ITEM->number.value++;
 		indigo_update_property(device, AGENT_IMAGER_STATS_PROPERTY, NULL);
+		if (!compensate(device))
+			INDIGO_DRIVER_ERROR(DRIVER_NAME, "Temperature compensation failed");
 		if (remaining_exposures < 0)
 			remaining_exposures = -1;
 		for (int exposure_attempt = 0; exposure_attempt < 3; exposure_attempt++) {
@@ -720,7 +727,7 @@ static void exposure_batch_process(indigo_device *device) {
 			indigo_send_message(device, "Batch failed");
 		}
 	}
-	AGENT_IMAGER_START_PREVIEW_ITEM->sw.value = AGENT_IMAGER_START_EXPOSURE_ITEM->sw.value = AGENT_IMAGER_START_STREAMING_ITEM->sw.value = AGENT_IMAGER_START_FOCUSING_ITEM->sw.value = AGENT_IMAGER_START_SEQUENCE_ITEM->sw.value = false;
+	AGENT_IMAGER_START_PREVIEW_ITEM->sw.value = AGENT_IMAGER_START_EXPOSURE_ITEM->sw.value = AGENT_IMAGER_START_STREAMING_ITEM->sw.value = AGENT_IMAGER_START_FOCUSING_ITEM->sw.value = AGENT_IMAGER_START_COMPENSATION_ITEM->sw.value = AGENT_IMAGER_START_SEQUENCE_ITEM->sw.value = false;
 	indigo_update_property(device, AGENT_IMAGER_STATS_PROPERTY, NULL);
 	indigo_update_property(device, AGENT_START_PROCESS_PROPERTY, NULL);
 	FILTER_DEVICE_CONTEXT->running_process = false;
@@ -799,7 +806,7 @@ static void streaming_batch_process(indigo_device *device) {
 			indigo_send_message(device, "Streaming failed");
 		}
 	}
-	AGENT_IMAGER_START_PREVIEW_ITEM->sw.value = AGENT_IMAGER_START_EXPOSURE_ITEM->sw.value = AGENT_IMAGER_START_STREAMING_ITEM->sw.value = AGENT_IMAGER_START_FOCUSING_ITEM->sw.value = AGENT_IMAGER_START_SEQUENCE_ITEM->sw.value = false;
+	AGENT_IMAGER_START_PREVIEW_ITEM->sw.value = AGENT_IMAGER_START_EXPOSURE_ITEM->sw.value = AGENT_IMAGER_START_STREAMING_ITEM->sw.value = AGENT_IMAGER_START_FOCUSING_ITEM->sw.value = AGENT_IMAGER_START_COMPENSATION_ITEM->sw.value = AGENT_IMAGER_START_SEQUENCE_ITEM->sw.value = false;
 	indigo_update_property(device, AGENT_IMAGER_STATS_PROPERTY, NULL);
 	indigo_update_property(device, AGENT_START_PROCESS_PROPERTY, NULL);
 	FILTER_DEVICE_CONTEXT->running_process = false;
@@ -815,6 +822,7 @@ static void streaming_batch_process(indigo_device *device) {
 static bool move_focuser(indigo_device *device, char *focuser_name, bool moving_out, int steps) {
 	indigo_property_state state = INDIGO_ALERT_STATE;
 	indigo_property *agent_steps_property;
+	DEVICE_PRIVATE_DATA->moved_out = moving_out;
 	if (!indigo_filter_cached_property(device, INDIGO_FILTER_FOCUSER_INDEX, FOCUSER_STEPS_PROPERTY_NAME, NULL, &agent_steps_property)) {
 		INDIGO_DRIVER_ERROR(DRIVER_NAME, "FOCUSER_STEPS not found");
 		return false;
@@ -1323,9 +1331,43 @@ static void autofocus_process(indigo_device *device) {
 		AGENT_START_PROCESS_PROPERTY->state = INDIGO_ALERT_STATE;
 	}
 	restore_subframe(device);
-	AGENT_IMAGER_START_PREVIEW_ITEM->sw.value = AGENT_IMAGER_START_EXPOSURE_ITEM->sw.value = AGENT_IMAGER_START_STREAMING_ITEM->sw.value = AGENT_IMAGER_START_FOCUSING_ITEM->sw.value = AGENT_IMAGER_START_SEQUENCE_ITEM->sw.value = false;
+	AGENT_IMAGER_START_PREVIEW_ITEM->sw.value = AGENT_IMAGER_START_EXPOSURE_ITEM->sw.value = AGENT_IMAGER_START_STREAMING_ITEM->sw.value = AGENT_IMAGER_START_FOCUSING_ITEM->sw.value = AGENT_IMAGER_START_COMPENSATION_ITEM->sw.value = AGENT_IMAGER_START_SEQUENCE_ITEM->sw.value = false;
 	restore_switch_state(device, INDIGO_FILTER_CCD_INDEX, CCD_UPLOAD_MODE_PROPERTY_NAME, upload_mode);
 	restore_switch_state(device, INDIGO_FILTER_CCD_INDEX, CCD_IMAGE_FORMAT_PROPERTY_NAME, image_format);
+	indigo_update_property(device, AGENT_IMAGER_STATS_PROPERTY, NULL);
+	indigo_update_property(device, AGENT_START_PROCESS_PROPERTY, NULL);
+	FILTER_DEVICE_CONTEXT->running_process = false;
+}
+
+static bool compensate(indigo_device *device) {
+	int steps_todo = AGENT_IMAGER_FOCUS_COMPENSATION_ITEM->number.value * (DEVICE_PRIVATE_DATA->last_temp - DEVICE_PRIVATE_DATA->initial_temp);
+	if (steps_todo == 0)
+		return true;
+	if (DEVICE_PRIVATE_DATA->moved_out && steps_todo < 0 && !DEVICE_PRIVATE_DATA->focuser_has_backlash)
+		steps_todo += AGENT_IMAGER_FOCUS_BACKLASH_ITEM->number.value + AGENT_IMAGER_FOCUS_BACKLASH_OUT_ITEM->number.value;
+	else 	if (!DEVICE_PRIVATE_DATA->moved_out && steps_todo > 0 && !DEVICE_PRIVATE_DATA->focuser_has_backlash)
+		steps_todo -= AGENT_IMAGER_FOCUS_BACKLASH_ITEM->number.value + AGENT_IMAGER_FOCUS_BACKLASH_IN_ITEM->number.value;
+	INDIGO_DRIVER_DEBUG(DRIVER_NAME, "Compensating %d steps %s", abs(steps_todo), steps_todo > 0 ? "out" : "in");
+	return move_focuser(device, FILTER_DEVICE_CONTEXT->device_name[INDIGO_FILTER_FOCUSER_INDEX], steps_todo > 0, abs(steps_todo));
+}
+
+static void compensate_process(indigo_device *device) {
+	FILTER_DEVICE_CONTEXT->running_process = true;
+	indigo_send_message(device, "Temperature compensation started");
+	if (compensate(device)) {
+		AGENT_START_PROCESS_PROPERTY->state = AGENT_IMAGER_STATS_PROPERTY->state = INDIGO_OK_STATE;
+		indigo_send_message(device, "Temperature compensation finished");
+	} else {
+		if (AGENT_ABORT_PROCESS_PROPERTY->state == INDIGO_BUSY_STATE) {
+			AGENT_ABORT_PROCESS_PROPERTY->state = INDIGO_OK_STATE;
+			indigo_update_property(device, AGENT_ABORT_PROCESS_PROPERTY, NULL);
+			indigo_send_message(device, "Temperature compensation aborted");
+		} else {
+			indigo_send_message(device, "Temperature compensation failed");
+		}
+		AGENT_START_PROCESS_PROPERTY->state = INDIGO_ALERT_STATE;
+	}
+	AGENT_IMAGER_START_PREVIEW_ITEM->sw.value = AGENT_IMAGER_START_EXPOSURE_ITEM->sw.value = AGENT_IMAGER_START_STREAMING_ITEM->sw.value = AGENT_IMAGER_START_FOCUSING_ITEM->sw.value = AGENT_IMAGER_START_COMPENSATION_ITEM->sw.value = AGENT_IMAGER_START_SEQUENCE_ITEM->sw.value = false;
 	indigo_update_property(device, AGENT_IMAGER_STATS_PROPERTY, NULL);
 	indigo_update_property(device, AGENT_START_PROCESS_PROPERTY, NULL);
 	FILTER_DEVICE_CONTEXT->running_process = false;
@@ -1477,6 +1519,7 @@ static void sequence_process(indigo_device *device) {
 		AGENT_IMAGER_START_EXPOSURE_ITEM->sw.value =
 		AGENT_IMAGER_START_STREAMING_ITEM->sw.value =
 		AGENT_IMAGER_START_FOCUSING_ITEM->sw.value =
+		AGENT_IMAGER_START_COMPENSATION_ITEM->sw.value =
 		AGENT_IMAGER_START_SEQUENCE_ITEM->sw.value = false;
 		indigo_update_property(device, AGENT_IMAGER_STATS_PROPERTY, NULL);
 		AGENT_START_PROCESS_PROPERTY->state = INDIGO_ALERT_STATE;
@@ -1554,7 +1597,7 @@ static void sequence_process(indigo_device *device) {
 	} else {
 		indigo_send_message(device, "Sequence failed");
 	}
-	AGENT_IMAGER_START_PREVIEW_ITEM->sw.value = AGENT_IMAGER_START_EXPOSURE_ITEM->sw.value = AGENT_IMAGER_START_STREAMING_ITEM->sw.value = AGENT_IMAGER_START_FOCUSING_ITEM->sw.value = AGENT_IMAGER_START_SEQUENCE_ITEM->sw.value = false;
+	AGENT_IMAGER_START_PREVIEW_ITEM->sw.value = AGENT_IMAGER_START_EXPOSURE_ITEM->sw.value = AGENT_IMAGER_START_STREAMING_ITEM->sw.value = AGENT_IMAGER_START_FOCUSING_ITEM->sw.value = AGENT_IMAGER_START_COMPENSATION_ITEM->sw.value = AGENT_IMAGER_START_SEQUENCE_ITEM->sw.value = false;
 	indigo_update_property(device, AGENT_IMAGER_STATS_PROPERTY, NULL);
 	indigo_update_property(device, AGENT_START_PROCESS_PROPERTY, NULL);
 	if (AGENT_ABORT_PROCESS_PROPERTY->state == INDIGO_BUSY_STATE) {
@@ -1575,7 +1618,7 @@ static void find_stars_process(indigo_device *device) {
 		AGENT_IMAGER_STARS_PROPERTY->state = INDIGO_ALERT_STATE;
 		indigo_update_property(device, AGENT_IMAGER_STARS_PROPERTY, NULL);
 	}
-	AGENT_IMAGER_START_PREVIEW_ITEM->sw.value = AGENT_IMAGER_START_EXPOSURE_ITEM->sw.value = AGENT_IMAGER_START_STREAMING_ITEM->sw.value = AGENT_IMAGER_START_FOCUSING_ITEM->sw.value = AGENT_IMAGER_START_SEQUENCE_ITEM->sw.value = false;
+	AGENT_IMAGER_START_PREVIEW_ITEM->sw.value = AGENT_IMAGER_START_EXPOSURE_ITEM->sw.value = AGENT_IMAGER_START_STREAMING_ITEM->sw.value = AGENT_IMAGER_START_FOCUSING_ITEM->sw.value = AGENT_IMAGER_START_COMPENSATION_ITEM->sw.value = AGENT_IMAGER_START_SEQUENCE_ITEM->sw.value = false;
 	AGENT_START_PROCESS_PROPERTY->state = AGENT_IMAGER_STATS_PROPERTY->state = INDIGO_OK_STATE;
 	restore_switch_state(device, INDIGO_FILTER_CCD_INDEX, CCD_UPLOAD_MODE_PROPERTY_NAME, upload_mode);
 	restore_switch_state(device, INDIGO_FILTER_CCD_INDEX, CCD_IMAGE_FORMAT_PROPERTY_NAME, image_format);
@@ -1653,7 +1696,7 @@ static indigo_result agent_device_attach(indigo_device *device) {
 		indigo_init_number_item(AGENT_IMAGER_BATCH_EXPOSURE_ITEM, AGENT_IMAGER_BATCH_EXPOSURE_ITEM_NAME, "Exposure time (s)", 0, 0xFFFF, 1, 1);
 		indigo_init_number_item(AGENT_IMAGER_BATCH_DELAY_ITEM, AGENT_IMAGER_BATCH_DELAY_ITEM_NAME, "Delay after each exposure (s)", 0, 0xFFFF, 1, 0);
 		// -------------------------------------------------------------------------------- Focus properties
-		AGENT_IMAGER_FOCUS_PROPERTY = indigo_init_number_property(NULL, device->name, AGENT_IMAGER_FOCUS_PROPERTY_NAME, "Agent", "Autofocus settings", INDIGO_OK_STATE, INDIGO_RW_PERM, 9);
+		AGENT_IMAGER_FOCUS_PROPERTY = indigo_init_number_property(NULL, device->name, AGENT_IMAGER_FOCUS_PROPERTY_NAME, "Agent", "Autofocus settings", INDIGO_OK_STATE, INDIGO_RW_PERM, 10);
 		if (AGENT_IMAGER_FOCUS_PROPERTY == NULL)
 			return INDIGO_FAILED;
 		indigo_init_number_item(AGENT_IMAGER_FOCUS_INITIAL_ITEM, AGENT_IMAGER_FOCUS_INITIAL_ITEM_NAME, "Initial step", 0, 0xFFFF, 1, 20);
@@ -1665,6 +1708,7 @@ static indigo_result agent_device_attach(indigo_device *device) {
 		indigo_init_number_item(AGENT_IMAGER_FOCUS_STACK_ITEM, AGENT_IMAGER_FOCUS_STACK_ITEM_NAME, "Stacking", 1, 5, 1, 3);
 		indigo_init_number_item(AGENT_IMAGER_FOCUS_REPEAT_ITEM, AGENT_IMAGER_FOCUS_REPEAT_ITEM_NAME, "Repeat count", 0, 10, 1, 0);
 		indigo_init_number_item(AGENT_IMAGER_FOCUS_DELAY_ITEM, AGENT_IMAGER_FOCUS_DELAY_ITEM_NAME, "Initial repeat delay (s)", 0, 3600, 1, 0);
+		indigo_init_number_item(AGENT_IMAGER_FOCUS_COMPENSATION_ITEM, AGENT_IMAGER_FOCUS_COMPENSATION_ITEM_NAME, "Compensation (steps/deg)", -1000, 1000, 1, 0);
 		// -------------------------------------------------------------------------------- Focus failure handling
 		AGENT_IMAGER_FOCUS_FAILURE_PROPERTY = indigo_init_switch_property(NULL, device->name, AGENT_IMAGER_FOCUS_FAILURE_PROPERTY_NAME, "Agent", "On Peak / HFD autofocus failure", INDIGO_OK_STATE, INDIGO_RW_PERM, INDIGO_ONE_OF_MANY_RULE, 2);
 		if (AGENT_IMAGER_FOCUS_FAILURE_PROPERTY == NULL)
@@ -1684,13 +1728,14 @@ static indigo_result agent_device_attach(indigo_device *device) {
 		indigo_init_number_item(AGENT_IMAGER_DITHERING_AGGRESSIVITY_ITEM, AGENT_IMAGER_DITHERING_AGGRESSIVITY_ITEM_NAME, "Aggressivity (px)", -10, 10, 1, 1);
 		indigo_init_number_item(AGENT_IMAGER_DITHERING_TIME_LIMIT_ITEM, AGENT_IMAGER_DITHERING_TIME_LIMIT_ITEM_NAME, "Time limit (s)", 0, 600, 1, 60);
 		// -------------------------------------------------------------------------------- Process properties
-		AGENT_START_PROCESS_PROPERTY = indigo_init_switch_property(NULL, device->name, AGENT_START_PROCESS_PROPERTY_NAME, "Agent", "Start process", INDIGO_OK_STATE, INDIGO_RW_PERM, INDIGO_ANY_OF_MANY_RULE, 5);
+		AGENT_START_PROCESS_PROPERTY = indigo_init_switch_property(NULL, device->name, AGENT_START_PROCESS_PROPERTY_NAME, "Agent", "Start process", INDIGO_OK_STATE, INDIGO_RW_PERM, INDIGO_ANY_OF_MANY_RULE, 6);
 		if (AGENT_START_PROCESS_PROPERTY == NULL)
 			return INDIGO_FAILED;
 		indigo_init_switch_item(AGENT_IMAGER_START_PREVIEW_ITEM, AGENT_IMAGER_START_PREVIEW_ITEM_NAME, "Start preview", false);
 		indigo_init_switch_item(AGENT_IMAGER_START_EXPOSURE_ITEM, AGENT_IMAGER_START_EXPOSURE_ITEM_NAME, "Start exposure batch", false);
 		indigo_init_switch_item(AGENT_IMAGER_START_STREAMING_ITEM, AGENT_IMAGER_START_STREAMING_ITEM_NAME, "Start streaming batch", false);
 		indigo_init_switch_item(AGENT_IMAGER_START_FOCUSING_ITEM, AGENT_IMAGER_START_FOCUSING_ITEM_NAME, "Start focusing", false);
+		indigo_init_switch_item(AGENT_IMAGER_START_COMPENSATION_ITEM, AGENT_IMAGER_START_COMPENSATION_ITEM_NAME, "Start compensation", false);
 		indigo_init_switch_item(AGENT_IMAGER_START_SEQUENCE_ITEM, AGENT_IMAGER_START_SEQUENCE_ITEM_NAME, "Start sequence", false);
 		AGENT_PAUSE_PROCESS_PROPERTY = indigo_init_switch_property(NULL, device->name, AGENT_PAUSE_PROCESS_PROPERTY_NAME, "Agent", "Pause/Resume process", INDIGO_OK_STATE, INDIGO_RW_PERM, INDIGO_ANY_OF_MANY_RULE, 1);
 		if (AGENT_PAUSE_PROCESS_PROPERTY == NULL)
@@ -1926,6 +1971,9 @@ static indigo_result agent_change_property(indigo_device *device, indigo_client 
 					if (AGENT_IMAGER_START_FOCUSING_ITEM->sw.value) {
 						AGENT_START_PROCESS_PROPERTY->state = INDIGO_BUSY_STATE;
 						indigo_set_timer(device, 0, autofocus_process, NULL);
+					} else if (AGENT_IMAGER_START_COMPENSATION_ITEM->sw.value) {
+						AGENT_START_PROCESS_PROPERTY->state = INDIGO_BUSY_STATE;
+						indigo_set_timer(device, 0, compensate_process, NULL);
 					}
 					indigo_update_property(device, AGENT_IMAGER_STATS_PROPERTY, NULL);
 				} else {
@@ -1933,6 +1981,7 @@ static indigo_result agent_change_property(indigo_device *device, indigo_client 
 					AGENT_IMAGER_START_EXPOSURE_ITEM->sw.value =
 					AGENT_IMAGER_START_STREAMING_ITEM->sw.value =
 					AGENT_IMAGER_START_FOCUSING_ITEM->sw.value =
+					AGENT_IMAGER_START_COMPENSATION_ITEM->sw.value =
 					AGENT_IMAGER_START_SEQUENCE_ITEM->sw.value = false;
 					AGENT_START_PROCESS_PROPERTY->state = INDIGO_ALERT_STATE;
 					indigo_update_property(device, AGENT_START_PROCESS_PROPERTY, "No focuser is selected");
@@ -1942,6 +1991,7 @@ static indigo_result agent_change_property(indigo_device *device, indigo_client 
 				AGENT_IMAGER_START_EXPOSURE_ITEM->sw.value =
 				AGENT_IMAGER_START_STREAMING_ITEM->sw.value =
 				AGENT_IMAGER_START_FOCUSING_ITEM->sw.value =
+				AGENT_IMAGER_START_COMPENSATION_ITEM->sw.value =
 				AGENT_IMAGER_START_SEQUENCE_ITEM->sw.value = false;
 				AGENT_START_PROCESS_PROPERTY->state = INDIGO_ALERT_STATE;
 				indigo_update_property(device, AGENT_START_PROCESS_PROPERTY, "No CCD is selected");
@@ -2206,6 +2256,15 @@ static indigo_result agent_define_property(indigo_client *client, indigo_device 
 	} else if (*FILTER_CLIENT_CONTEXT->device_name[INDIGO_FILTER_FOCUSER_INDEX] && !strcmp(property->device, FILTER_CLIENT_CONTEXT->device_name[INDIGO_FILTER_FOCUSER_INDEX])) {
 		if (!strcmp(property->name, FOCUSER_POSITION_PROPERTY_NAME)) {
 			CLIENT_PRIVATE_DATA->focuser_position = property->items[0].number.value;
+		} else if (!strcmp(property->name, FOCUSER_TEMPERATURE_PROPERTY_NAME)) {
+			for (int i = 0; i < property->count; i++) {
+				indigo_item *item = property->items + i;
+				if (!strcmp(item->name, FOCUSER_TEMPERATURE_ITEM_NAME)) {
+					CLIENT_PRIVATE_DATA->initial_temp = CLIENT_PRIVATE_DATA->last_temp = item->number.value;
+					INDIGO_DRIVER_DEBUG(DRIVER_NAME, "compensation temp = %g, delta = %g", CLIENT_PRIVATE_DATA->last_temp, CLIENT_PRIVATE_DATA->last_temp - CLIENT_PRIVATE_DATA->initial_temp);
+					break;
+				}
+			}
 		} else if (!strcmp(property->name, FOCUSER_BACKLASH_PROPERTY_NAME)) {
 			indigo_device *device = FILTER_CLIENT_CONTEXT->device;
 			DEVICE_PRIVATE_DATA->focuser_has_backlash = true;
@@ -2285,6 +2344,20 @@ static indigo_result agent_update_property(indigo_client *client, indigo_device 
 	} else if (*FILTER_CLIENT_CONTEXT->device_name[INDIGO_FILTER_FOCUSER_INDEX] && !strcmp(property->device, FILTER_CLIENT_CONTEXT->device_name[INDIGO_FILTER_FOCUSER_INDEX])) {
 		if (!strcmp(property->name, FOCUSER_POSITION_PROPERTY_NAME)) {
 			CLIENT_PRIVATE_DATA->focuser_position = property->items[0].number.value;
+			CLIENT_PRIVATE_DATA->initial_temp = CLIENT_PRIVATE_DATA->last_temp;
+			INDIGO_DRIVER_DEBUG(DRIVER_NAME, "compensation temp = %g, delta = %g", CLIENT_PRIVATE_DATA->last_temp, CLIENT_PRIVATE_DATA->last_temp - CLIENT_PRIVATE_DATA->initial_temp);
+		} else if (!strcmp(property->name, FOCUSER_STEPS_PROPERTY_NAME)) {
+			CLIENT_PRIVATE_DATA->initial_temp = CLIENT_PRIVATE_DATA->last_temp;
+			INDIGO_DRIVER_DEBUG(DRIVER_NAME, "compensation temp = %g, delta = %g", CLIENT_PRIVATE_DATA->last_temp, CLIENT_PRIVATE_DATA->last_temp - CLIENT_PRIVATE_DATA->initial_temp);
+		} else if (!strcmp(property->name, FOCUSER_TEMPERATURE_PROPERTY_NAME)) {
+			for (int i = 0; i < property->count; i++) {
+				indigo_item *item = property->items + i;
+				if (!strcmp(item->name, FOCUSER_TEMPERATURE_ITEM_NAME)) {
+					CLIENT_PRIVATE_DATA->last_temp = item->number.value;
+					INDIGO_DRIVER_DEBUG(DRIVER_NAME, "compensation temp = %g, delta = %g", CLIENT_PRIVATE_DATA->last_temp, CLIENT_PRIVATE_DATA->last_temp - CLIENT_PRIVATE_DATA->initial_temp);
+					break;
+				}
+			}
 		} else if (!strcmp(property->name, FOCUSER_BACKLASH_PROPERTY_NAME)) {
 			indigo_device *device = FILTER_CLIENT_CONTEXT->device;
 			DEVICE_PRIVATE_DATA->focuser_has_backlash = true;
