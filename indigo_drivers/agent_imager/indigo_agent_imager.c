@@ -122,9 +122,10 @@
 #define AGENT_IMAGER_STATS_HFD_ITEM      			(AGENT_IMAGER_STATS_PROPERTY->items+9)
 #define AGENT_IMAGER_STATS_PEAK_ITEM      		(AGENT_IMAGER_STATS_PROPERTY->items+10)
 #define AGENT_IMAGER_STATS_DITHERING_ITEM     (AGENT_IMAGER_STATS_PROPERTY->items+11)
-#define AGENT_IMAGER_STATS_FOCUS_OFFSET_ITEM     		(AGENT_IMAGER_STATS_PROPERTY->items+12)
-#define AGENT_IMAGER_STATS_RMS_CONTRAST_ITEM     		(AGENT_IMAGER_STATS_PROPERTY->items+13)
-#define AGENT_IMAGER_STATS_FOCUS_DEVIATION_ITEM     		(AGENT_IMAGER_STATS_PROPERTY->items+14)
+#define AGENT_IMAGER_STATS_FOCUS_OFFSET_ITEM  (AGENT_IMAGER_STATS_PROPERTY->items+12)
+#define AGENT_IMAGER_STATS_RMS_CONTRAST_ITEM  (AGENT_IMAGER_STATS_PROPERTY->items+13)
+#define AGENT_IMAGER_STATS_FOCUS_DEVIATION_ITEM		(AGENT_IMAGER_STATS_PROPERTY->items+14)
+#define AGENT_IMAGER_STATS_FOCUS_DELTA_TEMP_ITEM  (AGENT_IMAGER_STATS_PROPERTY->items+15)
 
 #define MAX_STAR_COUNT												50
 #define AGENT_IMAGER_STARS_PROPERTY						(DEVICE_PRIVATE_DATA->agent_stars_property)
@@ -188,7 +189,7 @@ typedef struct {
 	bool use_hfd_estimator;
 	bool use_rms_estimator;
 	bool use_aux_1;
-	bool moved_out;
+	bool backlash_cleared, moved_out;
 	double initial_temp, last_temp;
 } agent_private_data;
 
@@ -1275,11 +1276,13 @@ static bool autofocus_backlash(indigo_device *device) {
 		}
 		return false;
 	} else {
+		DEVICE_PRIVATE_DATA->backlash_cleared = true;
 		return true;
 	}
 }
 
 static bool autofocus(indigo_device *device) {
+	DEVICE_PRIVATE_DATA->backlash_cleared = false;
 	if (AGENT_IMAGER_FOCUS_BACKLASH_OVERSHOOT_ITEM->number.value > 1) {
 		return autofocus_overshoot(device);
 	} else {
@@ -1342,16 +1345,20 @@ static void autofocus_process(indigo_device *device) {
 
 static bool compensate(indigo_device *device) {
 	double threshold = AGENT_IMAGER_FOCUS_COMPENSATION_TRESHOLD_ITEM->number.value;
-	if (threshold == 0)
+	if (threshold == 0 || !DEVICE_PRIVATE_DATA->backlash_cleared) {
+		indigo_send_message(device, "Compensation disabled");
 		return true;
+	}
 	int steps_todo = AGENT_IMAGER_FOCUS_COMPENSATION_ITEM->number.value * (DEVICE_PRIVATE_DATA->last_temp - DEVICE_PRIVATE_DATA->initial_temp);
-	if (abs(steps_todo) <= threshold)
+	if (abs(steps_todo) <= threshold) {
+		indigo_send_message(device, "Nothing to compensate");
 		return true;
+	}
 	if (DEVICE_PRIVATE_DATA->moved_out && steps_todo < 0 && !DEVICE_PRIVATE_DATA->focuser_has_backlash)
 		steps_todo += AGENT_IMAGER_FOCUS_BACKLASH_ITEM->number.value + AGENT_IMAGER_FOCUS_BACKLASH_OUT_ITEM->number.value;
 	else if (!DEVICE_PRIVATE_DATA->moved_out && steps_todo > 0 && !DEVICE_PRIVATE_DATA->focuser_has_backlash)
 		steps_todo -= AGENT_IMAGER_FOCUS_BACKLASH_ITEM->number.value + AGENT_IMAGER_FOCUS_BACKLASH_IN_ITEM->number.value;
-	INDIGO_DRIVER_DEBUG(DRIVER_NAME, "Compensating %d steps %s", abs(steps_todo), steps_todo > 0 ? "out" : "in");
+	indigo_send_message(device, "Compensating %d steps %s", abs(steps_todo), steps_todo > 0 ? "out" : "in");
 	return move_focuser(device, FILTER_DEVICE_CONTEXT->device_name[INDIGO_FILTER_FOCUSER_INDEX], steps_todo > 0, abs(steps_todo));
 }
 
@@ -1795,7 +1802,7 @@ static indigo_result agent_device_attach(indigo_device *device) {
 		indigo_init_number_item(AGENT_IMAGER_SELECTION_RADIUS_ITEM, AGENT_IMAGER_SELECTION_RADIUS_ITEM_NAME, "Radius (px)", 1, 50, 1, 8);
 		indigo_init_number_item(AGENT_IMAGER_SELECTION_SUBFRAME_ITEM, AGENT_IMAGER_SELECTION_SUBFRAME_ITEM_NAME, "Subframe", 0, 10, 1, 0);
 		// -------------------------------------------------------------------------------- Focusing stats
-		AGENT_IMAGER_STATS_PROPERTY = indigo_init_number_property(NULL, device->name, AGENT_IMAGER_STATS_PROPERTY_NAME, "Agent", "Statistics", INDIGO_OK_STATE, INDIGO_RO_PERM, 15);
+		AGENT_IMAGER_STATS_PROPERTY = indigo_init_number_property(NULL, device->name, AGENT_IMAGER_STATS_PROPERTY_NAME, "Agent", "Statistics", INDIGO_OK_STATE, INDIGO_RO_PERM, 16);
 		if (AGENT_IMAGER_STATS_PROPERTY == NULL)
 			return INDIGO_FAILED;
 		indigo_init_number_item(AGENT_IMAGER_STATS_EXPOSURE_ITEM, AGENT_IMAGER_STATS_EXPOSURE_ITEM_NAME, "Elapsed exposure", 0, 3600, 0, 0);
@@ -1813,6 +1820,7 @@ static indigo_result agent_device_attach(indigo_device *device) {
 		indigo_init_number_item(AGENT_IMAGER_STATS_FOCUS_OFFSET_ITEM, AGENT_IMAGER_STATS_FOCUS_OFFSET_ITEM_NAME, "Autofocus offset", -0xFFFF, 0xFFFF, 0, 0);
 		indigo_init_number_item(AGENT_IMAGER_STATS_RMS_CONTRAST_ITEM, AGENT_IMAGER_STATS_RMS_CONTRAST_ITEM_NAME, "RMS contrast", 0, 1, 0, 0);
 		indigo_init_number_item(AGENT_IMAGER_STATS_FOCUS_DEVIATION_ITEM, AGENT_IMAGER_STATS_FOCUS_DEVIATION_ITEM_NAME, "Best focus deviation (%)", -100, 100, 0, 100);
+		indigo_init_number_item(AGENT_IMAGER_STATS_FOCUS_DELTA_TEMP_ITEM, AGENT_IMAGER_STATS_FOCUS_DELTA_TEMP_ITEM_NAME, "Focuser delta temp (deg)", -100, 100, 0, 0);
 		// -------------------------------------------------------------------------------- Sequencer
 		AGENT_IMAGER_SEQUENCE_PROPERTY = indigo_init_text_property(NULL, device->name, AGENT_IMAGER_SEQUENCE_PROPERTY_NAME, "Agent", "Sequence", INDIGO_OK_STATE, INDIGO_RW_PERM, 1 + SEQUENCE_SIZE);
 		if (AGENT_IMAGER_SEQUENCE_PROPERTY == NULL)
@@ -2265,7 +2273,12 @@ static indigo_result agent_define_property(indigo_client *client, indigo_device 
 			for (int i = 0; i < property->count; i++) {
 				indigo_item *item = property->items + i;
 				if (!strcmp(item->name, FOCUSER_TEMPERATURE_ITEM_NAME)) {
+					indigo_device *device = FILTER_CLIENT_CONTEXT->device;
 					CLIENT_PRIVATE_DATA->initial_temp = CLIENT_PRIVATE_DATA->last_temp = item->number.value;
+					if (AGENT_IMAGER_STATS_FOCUS_DELTA_TEMP_ITEM->number.value != 0) {
+						AGENT_IMAGER_STATS_FOCUS_DELTA_TEMP_ITEM->number.value = 0;
+						indigo_update_property(device, AGENT_IMAGER_STATS_PROPERTY, NULL);
+					}
 					INDIGO_DRIVER_DEBUG(DRIVER_NAME, "compensation temp = %g, delta = %g", CLIENT_PRIVATE_DATA->last_temp, CLIENT_PRIVATE_DATA->last_temp - CLIENT_PRIVATE_DATA->initial_temp);
 					break;
 				}
@@ -2348,17 +2361,33 @@ static indigo_result agent_update_property(indigo_client *client, indigo_device 
 		}
 	} else if (*FILTER_CLIENT_CONTEXT->device_name[INDIGO_FILTER_FOCUSER_INDEX] && !strcmp(property->device, FILTER_CLIENT_CONTEXT->device_name[INDIGO_FILTER_FOCUSER_INDEX])) {
 		if (!strcmp(property->name, FOCUSER_POSITION_PROPERTY_NAME)) {
+			indigo_device *device = FILTER_CLIENT_CONTEXT->device;
 			CLIENT_PRIVATE_DATA->focuser_position = property->items[0].number.value;
 			CLIENT_PRIVATE_DATA->initial_temp = CLIENT_PRIVATE_DATA->last_temp;
+			if (AGENT_IMAGER_STATS_FOCUS_DELTA_TEMP_ITEM->number.value != 0) {
+				AGENT_IMAGER_STATS_FOCUS_DELTA_TEMP_ITEM->number.value = 0;
+				indigo_update_property(device, AGENT_IMAGER_STATS_PROPERTY, NULL);
+			}
 			INDIGO_DRIVER_DEBUG(DRIVER_NAME, "compensation temp = %g, delta = %g", CLIENT_PRIVATE_DATA->last_temp, CLIENT_PRIVATE_DATA->last_temp - CLIENT_PRIVATE_DATA->initial_temp);
 		} else if (!strcmp(property->name, FOCUSER_STEPS_PROPERTY_NAME)) {
+			indigo_device *device = FILTER_CLIENT_CONTEXT->device;
 			CLIENT_PRIVATE_DATA->initial_temp = CLIENT_PRIVATE_DATA->last_temp;
+			if (AGENT_IMAGER_STATS_FOCUS_DELTA_TEMP_ITEM->number.value != 0) {
+				AGENT_IMAGER_STATS_FOCUS_DELTA_TEMP_ITEM->number.value = 0;
+				indigo_update_property(device, AGENT_IMAGER_STATS_PROPERTY, NULL);
+			}
 			INDIGO_DRIVER_DEBUG(DRIVER_NAME, "compensation temp = %g, delta = %g", CLIENT_PRIVATE_DATA->last_temp, CLIENT_PRIVATE_DATA->last_temp - CLIENT_PRIVATE_DATA->initial_temp);
 		} else if (!strcmp(property->name, FOCUSER_TEMPERATURE_PROPERTY_NAME)) {
 			for (int i = 0; i < property->count; i++) {
 				indigo_item *item = property->items + i;
 				if (!strcmp(item->name, FOCUSER_TEMPERATURE_ITEM_NAME)) {
+					indigo_device *device = FILTER_CLIENT_CONTEXT->device;
 					CLIENT_PRIVATE_DATA->last_temp = item->number.value;
+					double delta = CLIENT_PRIVATE_DATA->last_temp - CLIENT_PRIVATE_DATA->initial_temp;
+					if (AGENT_IMAGER_STATS_FOCUS_DELTA_TEMP_ITEM->number.value != delta) {
+						AGENT_IMAGER_STATS_FOCUS_DELTA_TEMP_ITEM->number.value = delta;
+						indigo_update_property(device, AGENT_IMAGER_STATS_PROPERTY, NULL);
+					}
 					INDIGO_DRIVER_DEBUG(DRIVER_NAME, "compensation temp = %g, delta = %g", CLIENT_PRIVATE_DATA->last_temp, CLIENT_PRIVATE_DATA->last_temp - CLIENT_PRIVATE_DATA->initial_temp);
 					break;
 				}
