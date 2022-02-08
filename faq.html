@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8"/>
+		<meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+		<meta name="viewport" content="width=device-width, initial-scale=1"/>
+		<meta name="description" content="INDIGO is the standard for astronomy software development.">
+		<link rel="icon" href="img/favicon.ico"/>
+		<title>INDIGO | INDIGO Astronomy</title>
+		<link rel="stylesheet" href="css/bootstrap.min.css"/>
+		<link rel="stylesheet" href="css/indigo.css" type="text/css"/>
+		<link rel="icon" type="image/png" href="img/favicon-32x32.png" sizes="32x32" />
+		<link rel="icon" type="image/png" href="img/favicon-16x16.png" sizes="16x16" />
+			<link rel="stylesheet" href="css/fontello.css" type="text/css"/>
+		<script>
+			(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+			(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+			m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+			})(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+			ga('create', 'UA-30002305-4', 'auto');
+			ga('send', 'pageview');
+		</script>
+	</head>
+
+	<body>
+		<nav class="navbar navbar-default navbar-static-top">
+			<div class="container">
+				<div class="navbar-header">
+					<button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+						<span class="sr-only">Toggle navigation</span>
+						<span class="icon-bar"></span>
+						<span class="icon-bar"></span>
+						<span class="icon-bar"></span>
+					</button>
+				</div>
+				<div id="navbar" class="navbar-collapse collapse">
+					<ul class="nav navbar-nav navbar-left">
+						<li><a href="index.html">INDIGO</a></li>
+						<li><a href="for-users.html">For Users</a></li>
+						<li><a href="for-developers.html">For Developers</a></li>
+						<li><a href="for-vendors.html">For Vendors</a></li>
+						<li class="active"><a href="faq.html">FAQ</a></li>
+						<li><a href="about.html">About</a></li>
+						<br/>
+						<li><a href="hardware.html">Compatible hardware</a></li>
+						<li><a href="software.html">Compatible software</a></li>
+						<li><a href="downloads.html">Downloads</a></li>
+						<li><a href="indigo-sky.html">INDIGO Sky</a></li>
+					</ul>
+				</div>
+			</div>
+		</nav>
+
+		<div id="intro">
+			<img id="logo" src="img/logo.png"/>
+			<div class="container">
+						<h1><strong>Frequently asked questions</strong></h1>
+						<p>But feel free to contact us if you have any other question.</p>
+			</div>
+		</div>
+
+		<div class="container">
+			<div class="row">
+				<div class="col-sm-12">
+		<a name="why"></a>
+				<h3>First of all… why another standard?</h3>
+				<p>Yes, there are other standards and initiatives for astronomy software development.
+				Some of them well established, accepted by the industry, nevertheless Windows only,
+				locked to .Net technologies and without any clear strategy towards IoT and distributed
+				computing. And another with opposite approach. Easy to port to Unix based systems,
+				fully distributed, but not enough standardised in many aspects, quite inefficient
+				for large amount of data and published under license avoiding real commercial use
+				in many situations and thus wider industry acceptance.</p>
+				<p>That’s why we begun development of INDIGO framework with the goal to take the best
+				from the both worlds – community driven, open to everybody, portable, distributed,
+				efficient, easy to use for developers and invisible for end-users.
+				Why version 2.0 at the very beginning? It can use legacy INDI wire protocol version
+				1.7 as a fall down option and thus INDIGO protocol version started on 2.0. And unlike
+				in INDI, INDIGO wire protocol version is coupled with the rest of framework.</p>
+
+		<a name="design"></a>
+				<h3>What are design requirements and limitations?</h3>
+				<p>This is a current list of requirements taken into consideration:</p>
+				<ol>
+				<li>No GPL code used to allow commercial use under application stores licenses.</li>
+				<li>ANSI C for portability and to allow simple wrapping into .Net, Java, GO,
+				Objective-C or Swift.</li>
+				<li>Layered architecture to allow both direct linking of the drivers into applications
+				or distributed use.</li>
+				<li>Scalability from mobile devices and embedded computers to desktops.</li>
+				<li>Atomic approach to device drivers. E.g. if camera has imaging and guiding chip,
+				driver should expose two independent simple devices instead of one complex. It is
+				much easier and transparent for client.</li>
+				<li>Hot-plug support for USB devices. If device is connected/disconnected while
+				driver is running, its properties should appear/disappear on the bus.</li>
+				</ol>
+
+		<a name="indigo_vs_indi"></a>
+		<h3>What are the differences between INDIGO and INDI?</h3>
+		<p>The most important technical difference is the architecture. While in INDI drivers
+		and clients are connected only over a pipe or network connection and each of them is
+		a standalone proces, in INDIGO drivers, agents and clients are connected to a software
+		bus. In the best case (when both drivers and client are the same process) it may speed
+		up the operations 1000x compared to INDI and you still have the possibility to make
+		the bus distributed and to run every piece of the solution in a different process or
+		on a different machine. More efficient architecture means less memory, less CPU usage
+		and thus less energy consumption, if you're running on batteries in the field.</p>
+		<p>The most important non-technical difference is, that INDIGO is developed from
+		scratch and strictly managed to become a standard. It has a vendor friendly license to
+		encourage not just an open source, but also the commercial development. It has
+		a conservative project management to protect the investment of 3rd party developers
+		to the integration.</p>
+
+		<a name="indigo_vs_ascom"></a>
+		<h3>What are the differences between INDIGO and ASCOM/ALPACA?</h3>
+		<p>The most important difference is, that INDIGO is multiplatform, distributed and
+		asynchronous system by its nature, while ASCOM is Windows/.Net only framework for
+		synchronous control of local devices. ALPACA promises to be distibuted and platform
+		independant, however the reality is a bit different. The only publicly used implementation
+		is ASCOM 6.5 remote that exports ASCOM devices over the network. Native ALPACA drivers are
+		still rare. Even more the API of ALPACA is 1:1 mapping of the ASCOM API which makes it
+		diffucult to map other frameworks to ALPACA and straight forward for ASCOM. So in theory
+		ALPACA is multilpatform and independant but in practice it is very tighly related to ASCOM. 
+
+		<a name="indigo_and_alpaca"></a>
+		<h3>Can I access INDIGO devices with ASCOM application?</h3>
+		<p>Yes, via ASCOM Remote. Starting with INDIGO version 2.0-146, there is an agent -
+		indigo_agent_alpaca, which exposes INDIGO devices to ALPACA clients, but 100% support is
+		impossible and some advanced features are not available, because they can not be mapped
+		to Alpaca. Alpaca is specifically designed to accomodate ASCOM not INDIGO. However, we
+		made the mapping as good as we were able to and in the end indigo_agent_alpaca passes
+		the ASCOM comformance tests.</p>
+
+		<a name="drivers"></a>
+				<h3>Can INDIGO client or application use INDI driver?</h3>
+
+				<p>Yes, INDIGO wire protocol adapter has the ability to fall down to legacy INDI
+				wire protocol version 1.7 to maintain backward compatibility with INDI drivers.
+				In this mode also property and item names are mapped to INDI standard corresponding
+				to version 1.2.</p>
+				<p>If you want use linked driver option or to use different wire protocol, you have
+				to use INDIGO driver.</p>
+
+				<h3>Can INDI client or application use INDIGO driver?</h3>
+				<p>Yes, if client or application will initiate communication over INDI wire protocol,
+				INDIGO driver will simulate behavior of INDI driver with common base set of properties.</p>
+
+				<h3>Can INDIGO client or application use ASCOM driver?</h3>
+				<p>Partially, INDIGO client or application can use INDI Server for Windows as
+				ASCOM-to-INDI bridge out-of-the-box, but probably much more efficient ASCOM driver
+				wrapper for direct linking will come soon.</p>
+
+		<a name="platforms"></a>
+				<h3>What platforms are supported?</h3>
+				<p>Currently on Linux and MacOSX both client and server components are supported. On Windows
+				only a client side is implemented.</p>
+				
+		<a name="forum"></a>
+				<h3>Is there an INDIGO user group?</h3>
+				<p>Yes, it is here: <a href="http://bb.cloudmakers.eu/" target="blank"><b>http://bb.cloudmakers.eu</b></span></a></p>
+
+				</div>
+			</div>
+		</div>
+
+		<footer class="footer">
+			<div class="container">
+				<p class="social">
+					<a href="https://github.com/indigo-astronomy/indigo" target="_blank" title="Visit us on GitHub"><span class="icon-github"></span></a>
+					<a href="https://www.facebook.com/Linux-Mac-Astronomy-1437544996488964/" target="_blank" title="Visit us on Facebook"><span class="icon-facebook"></span></a>
+					<a href="http://bb.cloudmakers.eu/" target="_blank" title="Visit INDIGO user group"><span class="icon-chat"></span></a>
+				</p>
+				<p class="copyright">Copyright &copy; 2016-2021, The INDIGO Initiative. All rights reserved.</p>
+			</div>
+		</footer>
+		<script src="js/jquery.min.js"></script>
+		<script src="js/bootstrap.min.js"></script>
+	</body>
+
+</html>

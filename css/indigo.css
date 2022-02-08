@@ -1,0 +1,126 @@
+body {
+}
+
+p {
+	text-align: justify;
+}
+
+h1, h2, h3 {
+	color: #4B0082;
+}
+
+hr {
+	border: 0;
+	height: 5px;
+	background: #4B0082;
+}
+
+table td, table td * {
+    vertical-align: top;
+}
+
+#logo {
+	float: right;
+	width: 100px;
+	margin-top: -50px;
+	margin-bottom: -50px;
+	margin-right: 20px;
+	position: relative;
+	z-index: 5000;
+}
+
+#navbar {
+	margin-top: -30px;
+}
+
+#intro {
+	background: #4B0082;
+}
+
+#intro p, #intro h1 {
+	color: white;
+}
+
+#intro .container {
+  padding-right: 140px;
+	padding-top: 20px;
+	padding-bottom: 35px;
+}
+
+iframe {
+	width: 100%;
+	height: 500px;
+}
+
+.navbar-toggle {
+	float: left;
+	margin-left: 15px;
+	margin-right: 0px;
+	margin-top: 15px;
+}
+
+.navbar {
+	background: #4B0082;
+	height: 70px;
+	margin-bottom: 3px;
+}
+
+.nav > li > a {
+	padding: 10px 15px 0px 15px;
+}
+
+.navbar-collapse {
+  border-top: 0;
+}
+
+.navbar-nav {
+  margin-top: 0px;
+}
+
+.navbar-static-top .navbar-nav > li > a, .navbar-static-top .navbar-nav > li > a:focus, .navbar-static-top .navbar-nav > li > a:hover {
+	background: #4B0082;
+	color: #C0C0C0;
+}
+
+.navbar-static-top .navbar-nav > .active > a, .navbar-static-top .navbar-nav > .active > a:focus, .navbar-static-top .navbar-nav > .active > a:hover {
+	background: #4B0082;
+	color: white;
+}
+
+.footer {
+	background: #4B0082;
+	height: 50px;
+	padding-top: 15px;
+  vertical-align: middle;
+}
+
+.copyright {
+  font-size: 80%;
+	color: #C0C0C0;
+}
+
+.social {
+  float: right;
+  font-size: 200%;
+  margin-top: -10px;
+}
+
+.social > a {
+  color: white;
+}
+
+.image-left {
+	clear: left;
+	float: left;
+	margin-right: 10px;
+}
+
+.image-right {
+	clear: right;
+	float: right;
+	margin-left: 10px;
+}
+
+.nav > li {
+	font-weight: bold;
+}

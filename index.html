@@ -1,10 +1,114 @@
-<html>
-<head>
-<title>
-TEST
-</title>
-</head>
-<body>
-<h1>TEST</h1>
-</body>
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8"/>
+		<meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+		<meta name="viewport" content="width=device-width, initial-scale=1"/>
+		<meta name="description" content="INDIGO is the standard for astronomy software development.">
+		<link rel="icon" href="img/favicon.ico"/>
+		<title>INDIGO | INDIGO Astronomy</title>
+		<link rel="stylesheet" href="css/bootstrap.min.css"/>
+		<link rel="stylesheet" href="css/indigo.css" type="text/css"/>
+		<link rel="icon" type="image/png" href="img/favicon-32x32.png" sizes="32x32" />
+		<link rel="icon" type="image/png" href="img/favicon-16x16.png" sizes="16x16" />
+			<link rel="stylesheet" href="css/fontello.css" type="text/css"/>
+		<script>
+			(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+			(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+			m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+			})(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+			ga('create', 'UA-30002305-4', 'auto');
+			ga('send', 'pageview');
+		</script>
+	</head>
+
+	<body>
+		<nav class="navbar navbar-default navbar-static-top">
+			<div class="container">
+				<div class="navbar-header">
+					<button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+						<span class="sr-only">Toggle navigation</span>
+						<span class="icon-bar"></span>
+						<span class="icon-bar"></span>
+						<span class="icon-bar"></span>
+					</button>
+				</div>
+				<div id="navbar" class="navbar-collapse collapse">
+					<ul class="nav navbar-nav navbar-left">
+						<li class="active"><a href="index.html">INDIGO</a></li>
+						<li><a href="for-users.html">For Users</a></li>
+						<li><a href="for-developers.html">For Developers</a></li>
+						<li><a href="for-vendors.html">For Vendors</a></li>
+						<li><a href="faq.html">FAQ</a></li>
+						<li><a href="about.html">About</a></li>
+						<br/>
+						<li><a href="hardware.html">Compatible hardware</a></li>
+						<li><a href="software.html">Compatible software</a></li>
+						<li><a href="downloads.html">Downloads</a></li>
+						<li><a href="indigo-sky.html">INDIGO Sky</a></li>
+					</ul>
+				</div>
+			</div>
+		</nav>
+
+		<div id="intro">
+			<img id="logo" src="img/logo.png"/>
+			<div class="container">
+				<h1><strong>Welcome to INDIGO</strong></h1>
+				<p>INDIGO is a system of standards and frameworks for multiplatform and
+				distributed astronomy software development designed to scale with your needs.</p>
+			</div>
+		</div>
+
+		<div class="container">
+			<div class="row">
+				<div class="col-sm-4">
+					<h3>For users</h3>
+					<p>Just start your favorite INDIGO powered application on your favorite operating
+					system and use your astro gadgets. INDIGO will find and configure most of them
+					for you automatically and even if it is not possible, it will help you to do it easily.</p>
+					<p>If you want to use some kind of distributed setup, start INDIGO server on
+					remote machine and let it detect connected devices. They will be discovered by client
+					applications the same way as if they will be connected directly to your desktop.
+					<a class="pull-right" href="for-users.html">Read more »</a></p><br>
+				</div>
+				<div class="col-sm-4">
+					<h3>For developers</h3>
+					<p>INDIGO is a kind of distributed software bus connecting device drivers on one side
+					and application code on another.</p>
+					<p>You can link device drivers directly to your application developed in any programming
+					language, load them on demand or to let application to connect to drivers on remote INDIGO
+					server.</p>
+					<p>INDIGO is open source project, but it can be used for free under business friendly
+					license.<a class="pull-right" href="for-developers.html">Read more »</a></p><br>
+				</div>
+				<div class="col-sm-4">
+					<h3>For vendors</h3>
+					<p>If you are hardware manufacturer, INDIGO can help you to make your devices compatible
+					with any INDIGO or INDI powered application on any Unix based operating system including
+					Linux and Apple macOS. Also INDIGO - ASCOM/ALPACA bridge for interoperability with Windows
+					clients is available.</p>
+					<p>If your device can be connected over any kind of network connection, you can embed INDIGO
+					server to your CCD camera, mount controller or other device to make it discoverable and
+					accessible directly from any application.
+					<a class="pull-right" href="for-vendors.html">Read more »</a></p><br>
+				</div>
+			</div>
+		</div>
+
+
+		<footer class="footer">
+			<div class="container">
+				<p class="social">
+					<a href="https://github.com/indigo-astronomy/indigo" target="_blank" title="Visit us on GitHub"><span class="icon-github"></span></a>
+					<a href="https://www.facebook.com/Linux-Mac-Astronomy-1437544996488964/" target="_blank" title="Visit us on Facebook"><span class="icon-facebook"></span></a>
+					<a href="http://bb.cloudmakers.eu/" target="_blank" title="Visit INDIGO user group"><span class="icon-chat"></span></a>
+				</p>
+				<p class="copyright">Copyright &copy; 2016-2021, The INDIGO Initiative. All rights reserved.</p>
+			</div>
+		</footer>
+		<script src="js/jquery.min.js"></script>
+		<script src="js/bootstrap.min.js"></script>
+	</body>
+
 </html>

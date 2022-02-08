@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8"/>
+		<meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+		<meta name="viewport" content="width=device-width, initial-scale=1"/>
+		<meta name="description" content="INDIGO is the standard for astronomy software development.">
+		<link rel="icon" href="img/favicon.ico"/>
+		<title>INDIGO | INDIGO Astronomy</title>
+		<link rel="stylesheet" href="css/bootstrap.min.css"/>
+		<link rel="stylesheet" href="css/indigo.css" type="text/css"/>
+		<link rel="icon" type="image/png" href="img/favicon-32x32.png" sizes="32x32" />
+		<link rel="icon" type="image/png" href="img/favicon-16x16.png" sizes="16x16" />
+			<link rel="stylesheet" href="css/fontello.css" type="text/css"/>
+		<script>
+			(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+			(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+			m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+			})(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+			ga('create', 'UA-30002305-4', 'auto');
+			ga('send', 'pageview');
+		</script>
+	</head>
+
+	<body>
+		<nav class="navbar navbar-default navbar-static-top">
+			<div class="container">
+				<div class="navbar-header">
+					<button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+						<span class="sr-only">Toggle navigation</span>
+						<span class="icon-bar"></span>
+						<span class="icon-bar"></span>
+						<span class="icon-bar"></span>
+					</button>
+				</div>
+				<div id="navbar" class="navbar-collapse collapse">
+					<ul class="nav navbar-nav navbar-left">
+						<li><a href="index.html">INDIGO</a></li>
+						<li><a href="for-users.html">For Users</a></li>
+						<li><a href="for-developers.html">For Developers</a></li>
+						<li><a href="for-vendors.html">For Vendors</a></li>
+						<li><a href="faq.html">FAQ</a></li>
+						<li><a href="about.html">About</a></li>
+						<br/>
+						<li><a href="hardware.html">Compatible hardware</a></li>
+						<li><a href="software.html">Compatible software</a></li>
+						<li class="active"><a href="downloads.html">Downloads</a></li>
+						<li><a href="indigo-sky.html">INDIGO Sky</a></li>
+					</ul>
+				</div>
+			</div>
+		</nav>
+
+		<div id="intro">
+			<img id="logo" src="img/logo.png"/>
+			<div class="container">
+						<h1><strong>Downloads</strong></h1>
+						<p>You can download INDIGO distributions for Linux, macOS and Windows here.</p>
+			</div>
+		</div>
+
+		<div class="container">
+			<div class="row">
+				<div class="col-sm-12">
+					<h3><a id="linuxdl"></a>Linux</h3>
+			<p>Binary distribution of INDIGO Infrastructure or INDIGO Control Panel can be installed
+			on Linux either automatically by apt-get or manually by dpkg.</p>
+			
+			<p>To setup automatic installation and subsequent updates, you need to add our repository
+			URL to APT sources list. To do it from command line, create the file /etc/apt/sources.list.d/indigo.list
+			as root with you favourite editor, e.g. like this</p>
+			<p>$ <mark>sudo vi /etc/apt/sources.list.d/indigo.list</mark></p>
+			<p>add the following line</p>
+			<p><mark>deb [trusted=yes] https://indigo-astronomy.github.io/indigo_ppa/ppa indigo main</mark></p>
+			<p>and execute the following commands</p>
+			<p>$ <mark>sudo apt-get update</mark></p>
+			<p>$ <mark>sudo apt-get install indigo</mark></p>
+			<p>$ <mark>sudo apt-get install ain-imager</mark></p>
+			<p>$ <mark>sudo apt-get install indigo-control-panel</mark></p>
+			
+			<p>To do it from e.g. Synaptic package manager, execute it, go to Settings > Repositories, click new and fill URI, distribution and sections with the following text:</p>
+			
+			<p><img width="50%" src="/img/synaptic.jpg"/></p>
+			
+			<p>Once done, click Reload and search for indigo packages.
+			
+			<h5><b>INDIGO Infrastructure</b></h5>
+			
+			<p>Relase notes are available in <a target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/CHANGELOG.md">CHANGELOG.md</a></p>
+			
+			<p>To install INDIGO manually, download one of the following packages for your operating system and install it with a command like this:
+			
+			<p>$ <mark>sudo dpkg -i --force-all ~/Downloads/indigo-2.0-XX-YYY.deb</mark></p>
+					<ul>
+					<li>INDIGO for 32-bit Intel Linux: <a href="https://indigo-astronomy.github.io/indigo_ppa/ppa/pool/main/i/indigo/indigo-2.0-166-i386.deb">indigo-2.0-166-i386.deb</a></li>
+					<li>INDIGO for 64-bit Intel Linux: <a href="https://indigo-astronomy.github.io/indigo_ppa/ppa/pool/main/i/indigo/indigo-2.0-166-amd64.deb">indigo-2.0-166-amd64.deb</a></li>
+					<li>INDIGO for ARMHF (V6+) Debian Linux or Raspbian: <a href="https://indigo-astronomy.github.io/indigo_ppa/ppa/pool/main/i/indigo/indigo-2.0-166-armhf.deb">indigo-2.0-166-armhf.deb</a></li>
+					<li>INDIGO for ARM64 (V8) Debian Linux: <a href="https://indigo-astronomy.github.io/indigo_ppa/ppa/pool/main/i/indigo/indigo-2.0-166-arm64.deb">indigo-2.0-166-arm64.deb</a></li>
+					</ul>
+					
+					<h5><b>INDIGO Control Panel</b></h5>
+					<p>One can also install INDIGO Control Panel, a GUI tool for managing and confiuring INDIGO Infrastructure:</p>
+					<ul>
+					<li>INDIGO Control Panel for 32-bit Intel Linux (Debian 9 or newer): <a href="https://indigo-astronomy.github.io/indigo_ppa/ppa/pool/main/i/indigo-control-panel/indigo-control-panel_0.10-1_i386.deb">indigo-control-panel_0.10-1_i386.deb</a></li>
+					<li>INDIGO Control Panel for 64-bit Intel Linux (Ubuntu 18.04, Debian 9 or newer): <a href="https://indigo-astronomy.github.io/indigo_ppa/ppa/pool/main/i/indigo-control-panel/indigo-control-panel_0.10-1_amd64.deb">indigo-control-panel_0.10-1_amd64.deb</a></li>
+					
+					<li>INDIGO Control Panel for ARMHF (V6+) Debian Linux or Raspbian: <a href="https://indigo-astronomy.github.io/indigo_ppa/ppa/pool/main/i/indigo-control-panel/indigo-control-panel_0.10-1_armhf.deb">indigo-control-panel_0.10-1_armhf.deb</a></li>
+					<li>INDIGO Control Panel for ARM64 (V8) Debian Linux: <a href="https://indigo-astronomy.github.io/indigo_ppa/ppa/pool/main/i/indigo-control-panel/indigo-control-panel_0.10-1_arm64.deb">indigo-control-panel_0.10-1_arm64.deb</a></li>
+					</ul>
+					
+					<h5><b>Ain INDIGO Imager</b></h5>
+					<p>Ain is an INDIGO imager application:</p>
+					<ul>
+					<li>Ain Imager for 32-bit Intel Linux (Debian 9 or newer): <a href="https://indigo-astronomy.github.io/indigo_ppa/ppa/pool/main/a/ain-imager/ain-imager_0.9-0_i386.deb">ain-imager_0.9-0_i386.deb</a></li>
+					<li>Ain Imager for 64-bit Intel Linux (Ubuntu 18.04, Debian 9 or newer): <a href="https://indigo-astronomy.github.io/indigo_ppa/ppa/pool/main/a/ain-imager/ain-imager_0.9-0_amd64.deb">ain-imager_0.9-0_amd64.deb</a></li>
+					<li>Ain Imager for ARMHF (V6+) Debian Linux or Raspbian: <a href="https://indigo-astronomy.github.io/indigo_ppa/ppa/pool/main/a/ain-imager/ain-imager_0.9-0_armhf.deb">ain-imager_0.9-0_armhf.deb</a></li>
+					<li>Ain Imager for ARM64 (V8) Debian Linux: <a href="https://indigo-astronomy.github.io/indigo_ppa/ppa/pool/main/a/ain-imager/ain-imager_0.9-0_arm64.deb">ain-imager_0.9-0_arm64.deb</a></li>
+					</ul>
+					<!--<li>Kernel module for FLI USB devices for Intel 32/64-bit and ARMv6+ Linux (raspbian): <a href="/download/indigo-fliusb-1.3-7-all.deb">indigo-fliusb-1.3-7-all.deb</a></li><br/>-->
+					<h3>Apple macOS</h3>
+					<p>To install INDIGO on Apple computer (macOS 10.10 or later), download and open the following package:</p>
+					<ul>
+					<li>INDIGO for Apple macOS (10.10 or later): <a href="http://download.cloudmakers.eu/INDIGO_Server_4.0.dmg">INDIGO_Server_4.0.dmg</a></li>								
+					</ul>
+					<p>and drag &amp; drop INDIGO Server application to Applications folder:</p>					
+					<p><img width="50%" src="/img/macos.jpg"/></p>
+					<p>For more INDIGO compatible applications including INDIGO Control Panel and INDIGO Dashboard for macOS visit <a href="http://www.cloudmakers.eu/xindi/">Cloudmakers macOS software page</a>.</p>
+					
+					<h3><a id="windowsdl"></a>Microsoft Windows</h3>
+					<h5><b>INDIGO Control Panel</b></h5>
+					<p>INDIGO Control Panel is a GUI tool for managing and confiuring INDIGO Infrastructure:</p>
+					<ul>
+					<li>INDIGO Control Panel for 32-bit Windows (needs <a href="http://download.cloudmakers.eu/Bonjour.msi">32bit Bonjour</a> to auto discover INDIGO Services): <a href="/download/INDIGO_Control_Panel-0.10-1-32bit-setup.exe">INDIGO_Control_Panel-0.10-1-32bit-setup.exe</a></li>
+					<li>INDIGO Control Panel for 64-bit Windows (needs <a href="http://download.cloudmakers.eu/Bonjour64.msi">64bit Bonjour</a> to auto discover INDIGO Services): <a href="/download/INDIGO_Control_Panel-0.10-1-64bit-setup.exe">INDIGO_Control_Panel-0.10-1-64bit-setup.exe</a></li>
+					</ul>
+					
+					<h5><b>Ain INDIGO Imager</b></h5>
+					<p>Ain is an INDIGO imager application:</p>
+					<ul>
+					<li>Ain Imager for 32-bit Windows (needs <a href="http://download.cloudmakers.eu/Bonjour.msi">32bit Bonjour</a> to auto discover INDIGO Services): <a href="/download/Ain_Imager-0.9-0-32bit-setup.exe">Ain_Imager-0.9-0-32bit-setup.exe</a></li>
+					<li>Ain Imager for 64-bit Windows (needs <a href="http://download.cloudmakers.eu/Bonjour64.msi">64bit Bonjour</a> to auto discover INDIGO Services): <a href="/download/Ain_Imager-0.9-0-64bit-setup.exe">Ain_Imager-0.9-0-64bit-setup.exe</a></li>
+					</ul>
+
+					<h5><b>INDIGO to ASCOM bridges (<b style="color:red">OBSOLETE, use INDIGO Alpaca Agent</b>)</b></h5>
+					
+					<p> INDIGO to ASCOM bridges are replaced by the INDIGO Alpaca Agent (indigo_alpaca_agent, <a href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/agent_alpaca/README.md">README is here</a>). It requires Ascom Remote (Alpaca) to be istalled on the Windows host. It supports almost all ASCOM hardware classes with the exception of ObservingConditions and SafetyMonitors, which can not be easily mapped to the existing INDIGO devce classes.
+					<p>If you still want to install ASCOM drivers for INDIGO server on Windows computer, download and install the following packages:</p>
+					<ul>
+					<li>ASCOM camera driver for INDIGO: <a href="http://download.cloudmakers.eu/INDIGO%20Camera%20Setup.exe">INDIGO Camera Setup.exe</a></li>					
+					<li>ASCOM filter wheel driver for INDIGO: <a href="http://download.cloudmakers.eu/INDIGO%20FilterWheel%20Setup.exe">INDIGO FilterWheel Setup.exe</a></li>
+					<li>You may also need to install Bonjour for 32 bit Windows: <a href="http://download.cloudmakers.eu/Bonjour.msi">Bonjour.msi</a></li>					
+					<li>and/or for 64 bit Windows: <a href="http://download.cloudmakers.eu/Bonjour64.msi">Bonjour64.msi</a></li>					
+					</ul>
+					<h3>Sources</h3>
+					<p>Make sure that you have all prerequisites installed. On Ubuntu / Debian / Raspian use:</p>
+					<p>$ <mark>sudo apt-get install build-essential autoconf autotools-dev libtool cmake libudev-dev libavahi-compat-libdnssd-dev libusb-1.0-0-dev fxload libcurl4-gnutls-dev libgphoto2-dev libz-dev git curl</mark></p>
+					<p>It is advised to remove libraw1394-dev as the build may fail if it is installed</p>
+					<p>$ <mark>sudo apt-get remove libraw1394-dev</mark></p>
+					<p>On macOS install XCode and download and build autoconf, automake and libtool (use tools/cltools.sh script).</p>
+					<p>If you're ready, get the code and built it</p>
+					<p>$ <mark>git clone https://github.com/indigo-astronomy/indigo.git</mark></p>
+					<p>$ <mark>cd indigo</mark></p>
+					<p>$ <mark>make all</mark></p>
+					<p>$ <mark>build/bin/indigo_server indigo_ccd_asi [other drivers]</mark></p>
+					<p>and connect from INDIGO Control Panel, any INDI client or WEB browser to port 7624...</p>
+				</div>
+			</div>
+		</div>
+
+		<footer class="footer">
+			<div class="container">
+				<p class="social">
+					<a href="https://github.com/indigo-astronomy/indigo" target="_blank" title="Visit us on GitHub"><span class="icon-github"></span></a>
+					<a href="https://www.facebook.com/Linux-Mac-Astronomy-1437544996488964/" target="_blank" title="Visit us on Facebook"><span class="icon-facebook"></span></a>
+					<a href="http://bb.cloudmakers.eu/" target="_blank" title="Visit INDIGO user group"><span class="icon-chat"></span></a>
+				</p>
+				<p class="copyright">Copyright &copy; 2016-2021, The INDIGO Initiative. All rights reserved.</p>
+			</div>
+		</footer>
+		<script src="js/jquery.min.js"></script>
+		<script src="js/bootstrap.min.js"></script>
+	</body>
+
+</html>

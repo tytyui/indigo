@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8"/>
+		<meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+		<meta name="viewport" content="width=device-width, initial-scale=1"/>
+		<meta name="description" content="INDIGO is the standard for astronomy software development.">
+		<link rel="icon" href="img/favicon.ico"/>
+		<title>INDIGO | INDIGO Astronomy</title>
+		<link rel="stylesheet" href="css/bootstrap.min.css"/>
+		<link rel="stylesheet" href="css/indigo.css" type="text/css"/>
+		<link rel="icon" type="image/png" href="img/favicon-32x32.png" sizes="32x32" />
+		<link rel="icon" type="image/png" href="img/favicon-16x16.png" sizes="16x16" />
+			<link rel="stylesheet" href="css/fontello.css" type="text/css"/>
+		<script>
+			(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+			(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+			m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+			})(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+			ga('create', 'UA-30002305-4', 'auto');
+			ga('send', 'pageview');
+		</script>
+	</head>
+
+	<body>
+		<nav class="navbar navbar-default navbar-static-top">
+			<div class="container">
+				<div class="navbar-header">
+					<button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+						<span class="sr-only">Toggle navigation</span>
+						<span class="icon-bar"></span>
+						<span class="icon-bar"></span>
+						<span class="icon-bar"></span>
+					</button>
+				</div>
+				<div id="navbar" class="navbar-collapse collapse">
+					<ul class="nav navbar-nav navbar-left">
+						<li><a href="index.html">INDIGO</a></li>
+						<li><a href="for-users.html">For Users</a></li>
+						<li><a href="for-developers.html">For Developers</a></li>
+						<li><a href="for-vendors.html">For Vendors</a></li>
+						<li><a href="faq.html">FAQ</a></li>
+						<li><a href="about.html">About</a></li>
+						<br/>
+						<li class="active"><a href="hardware.html">Compatible hardware</a></li>
+						<li><a href="software.html">Compatible software</a></li>
+						<li><a href="downloads.html">Downloads</a></li>
+						<li><a href="indigo-sky.html">INDIGO Sky</a></li>
+					</ul>
+				</div>
+			</div>
+		</nav>
+
+		<div id="intro">
+			<img id="logo" src="img/logo.png"/>
+			<div class="container">
+						<h1><strong>Device Drivers & Agents</strong></h1>
+						<p>INDIGO distribution contains dozens device drivers and agents out of the box.</p>
+			</div>
+		</div>
+
+		<div class="container">
+			<div class="row">
+				<h3>The list of device drivers distributed with INDIGO 2.0-154</h3>
+				<div class="col-sm-12">
+					<table border="0">
+					
+						<tr><td width="200px">indigo_ccd_atik</td><td><span class="icon-linux"></td><td><span class="icon-apple"></td>
+						<td width="700px">Atik CCD driver
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/ccd_atik/README.md">Read more »</a>
+						</td></tr>
+
+						<tr><td>indigo_ccd_asi</td><td width="20px"><span class="icon-linux"></td><td width="50px"><span class="icon-apple"></td>
+						<td>ZWO ASI CCD driver
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/ccd_asi/README.md">Read more »</a>
+						</td></tr>
+
+						<tr><td>indigo_ccd_iidc</td><td><span class="icon-linux"></td><td><span class="icon-apple"></td>
+						<td>IIDC CCD driver
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/ccd_iidc/README.md">Read more »</a>
+						</td></tr>
+
+						<tr><td>indigo_ccd_qhy</td><td><span class="icon-linux"></td><td><span class="icon-apple"></td>
+						<td>QHY CCD and filter wheel driver
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/ccd_qhy/README.md">Read more »</a>
+						</td></tr>
+
+						<tr><td>indigo_ccd_sbig</td><td><span class="icon-linux"></td><td><span class="icon-apple"></td>
+						<td>SBIG CCD and filter wheel driver
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/ccd_sbig/README.md">Read more »</a>
+						</td></tr>
+
+						<tr><td>indigo_ccd_dsi</td><td><span class="icon-linux"></td><td><span class="icon-apple"></td>
+						<td>Meade DSI CCD driver
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/ccd_dsi/README.md">Read more »</a>
+						</td></tr>
+
+						<tr><td>indigo_ccd_simulator</td><td><span class="icon-linux"></td><td><span class="icon-apple"></td>
+						<td>CCD / focuser / wheel simulator driver
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/ccd_simulator/README.md">Read more »</a>
+						</td></tr>
+
+						<tr><td>indigo_ccd_ssag</td><td><span class="icon-linux"></td><td><span class="icon-apple"></td>
+						<td>Orion SSAG / QHY5 CCD driver
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/ccd_ssag/README.md">Read more »</a>
+						</td></tr>
+
+						<tr><td>indigo_ccd_sx</td><td><span class="icon-linux"></td><td><span class="icon-apple"></td>
+						<td>StarlightXpress CCD driver
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/ccd_sx/README.md">Read more »</a>
+						</td></tr>
+
+						<tr><td>indigo_ccd_qsi</td><td><span class="icon-linux"></td><td><span class="icon-apple"></td>
+						<td>QSI CCD driver
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/ccd_qsi/README.md">Read more »</a>
+						</td></tr>
+
+						<tr><td>indigo_ccd_fli</td><td><span class="icon-linux"></td><td><span class="icon-apple"></td>
+						<td>FLI CCD driver
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/ccd_fli/README.md">Read more »</a>
+						</td></tr>
+
+						<tr><td>indigo_ccd_apogee</td><td><span class="icon-linux"></td><td><span class="icon-apple"></td>
+						<td>Apogee CCD driver
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/ccd_apogee/README.md">Read more »</a>
+						</td></tr>
+
+						<tr><td>indigo_ccd_andor</td><td><span class="icon-linux"></td><td></td>
+						<td>Andor CCD driver
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_optional_drivers/ccd_andor/README.md">Read more »</a>
+						</td></tr>
+
+						<tr><td>indigo_ccd_mi</td><td><span class="icon-linux"></td><td><span class="icon-apple"></td>
+						<td>Moravian Instruments CCD driver
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/ccd_mi/README.md">Read more »</a>
+						</td></tr>
+
+						<tr><td>indigo_ccd_touptek</td><td><span class="icon-linux"></td><td><span class="icon-apple"></td>
+						<td>ToupTek CCD driver
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/ccd_touptek/README.md">Read more »</a>
+						</td></tr>
+
+						<tr><td>indigo_ccd_altair</td><td><span class="icon-linux"></td><td><span class="icon-apple"></td>
+						<td>AltairAstro CCD driver
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/ccd_altair/README.md">Read more »</a>
+						</td></tr>
+
+						<tr><td>indigo_ccd_uvc</td><td><span class="icon-linux"></td><td><span class="icon-apple"></td>
+						<td>UVC (USB Video Class, e.g. SVBONY SV205) CCD driver
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/ccd_uvc/README.md">Read more »</a>
+						</td></tr>
+
+						<tr><td>indigo_ccd_ica</td><td></td><td><span class="icon-apple"></td>
+						<td>ICA DSLR driver (obsoleted by indigo_ccd_ptp)
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_mac_drivers/ccd_ica/README.md">Read more »</a>
+						</td></tr>
+
+						<tr><td>indigo_ccd_gphoto2</td><td><span class="icon-linux"></td><td></td>
+						<td>Gphoto2 CCD driver (obsoleted by indigo_ccd_ptp)
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_linux_drivers/ccd_gphoto2/README.md">Read more »</a>
+						</td></tr>
+
+						<tr><td>indigo_ccd_ptp</td><td><span class="icon-linux"></td><td><span class="icon-apple"></td>
+						<td>PTP-over-USB driver for Canon, Nikon and Sony Alpha cameras (replales ICA and GPhoto drivers)
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/ccd_ptp/README.md">Read more »</a>
+						</td></tr>
+
+						<tr><td>indigo_wheel_atik</td><td><span class="icon-linux"></td><td><span class="icon-apple"></td>
+						<td>Atik filter wheel driver
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/wheel_atik/README.md">Read more »</a>
+						</td></tr>
+
+						<tr><td>indigo_wheel_asi</td><td><span class="icon-linux"></td><td><span class="icon-apple"></td>
+						<td>ZWO ASI filter wheel driver
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/wheel_asi/README.md">Read more »</a>
+						</td></tr>
+
+						<tr><td>indigo_wheel_fli</td><td><span class="icon-linux"></td><td><span class="icon-apple"></td>
+						<td>FLI filter wheel driver
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/wheel_fli/README.md">Read more »</a>
+						</td></tr>
+
+						<tr><td>indigo_wheel_sx</td><td><span class="icon-linux"></td><td><span class="icon-apple"></td>
+						<td>StarlightXpress filter wheel driver
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/wheel_sx/README.md">Read more »</a>
+						</td></tr>
+
+						<tr><td>indigo_wheel_trutek</td><td><span class="icon-linux"></td><td><span class="icon-apple"></td>
+						<td>Trutek (TruTech) wheel driver (untested)
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/wheel_trutek/README.md">Read more »</a>
+						</td></tr>
+
+						<tr><td> indigo_wheel_quantum</td><td><span class="icon-linux"></td><td><span class="icon-apple"></td>
+						<td>Brightstar Quantum wheel driver (untested)
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/wheel_quantum/README.md">Read more »</a>
+						</td></tr>
+
+						<tr><td> indigo_wheel_qhy</td><td><span class="icon-linux"></td><td><span class="icon-apple"></td>
+						<td>QHY CFW wheel driver
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/wheel_qhy/README.md">Read more »</a>
+						</td></tr>
+
+						<tr><td>indigo_wheel_xagyl</td><td><span class="icon-linux"></td><td><span class="icon-apple"></td>
+						<td>Xagyl wheel driver (untested)
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/wheel_xagyl/README.md">Read more »</a>
+						</td></tr>
+
+						<tr><td>indigo_wheel_optec</td><td><span class="icon-linux"></td><td><span class="icon-apple"></td>
+						<td>Optec wheel driver (untested)
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/wheel_optec/README.md">Read more »</a>
+						</td></tr>
+					
+						<tr><td>indigo_wheel_manual</td><td><span class="icon-linux"></td><td><span class="icon-apple"></td>
+						<td>Manual filter wheel driver
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/wheel_manual/README.md">Read more »</a>
+						</td></tr>
+
+						<tr><td>indigo_guider_asi</td><td><span class="icon-linux"></td><td><span class="icon-apple"></td>
+						<td>ZWO ASI USB-ST4 guider driver
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/guider_asi/README.md">Read more »</a>
+						</td></tr>
+
+						<tr><td>indigo_guider_eqmac</td><td></td><td><span class="icon-apple"></td>
+						<td>EQMac guider driver (obsoleted on macOS Mojave)
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_mac_drivers/guider_eqmac/README.md">Read more »</a>
+						</td></tr>
+
+						<tr><td>indigo_guider_cgusbst4</td><td><span class="icon-linux"></td><td><span class="icon-apple"></td>
+						<td>CG-USB-ST4 driver
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/guider_cgusbst4/README.md">Read more »</a>
+						</td></tr>
+
+						<tr><td>indigo_guider_gpusb</td><td><span class="icon-linux"></td><td><span class="icon-apple"></td>
+						<td>Shoestring GPUSB guider driver
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/guider_gpusb/README.md">Read more »</a>
+						</td></tr>
+
+						<tr><td>indigo_ao_sx</td><td><span class="icon-linux"></td><td><span class="icon-apple"></td>
+						<td>StarlightXpress AO driver
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/ao_sx/README.md">Read more »</a>
+						</td></tr>
+
+						<tr><td>indigo_focuser_asi</td><td><span class="icon-linux"></td><td><span class="icon-apple"></td>
+						<td>ZWO EAF focuser driver
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/focuser_asi/README.md">Read more »</a>
+						</td></tr>
+
+						<tr><td>indigo_focuser_fli</td><td><span class="icon-linux"></td><td><span class="icon-apple"></td>
+						<td>FLI focuser driver
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/focuser_fli/README.md">Read more »</a>
+						</td></tr>
+
+						<tr><td>indigo_focuser_fcusb</td><td><span class="icon-linux"></td><td><span class="icon-apple"></td>
+						<td>Shoestring FCUSB focuser controller driver
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/focuser_fcusb/README.md">Read more »</a>
+						</td></tr>
+
+						<tr><td>indigo_focuser_usbv3</td><td><span class="icon-linux"></td><td><span class="icon-apple"></td>
+						<td>Focuser USB v3 driver
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/focuser_usbv3/README.md">Read more »</a>
+						</td></tr>
+
+						<tr><td>indigo_focuser_wemacro</td><td><span class="icon-linux"></td><td><span class="icon-apple"></td>
+						<td>WeMacro Rail driver
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/focuser_wemacro/README.md">Read more »</a>
+						</td></tr>
+
+						<tr><td>indigo_focuser_wemacro_bt</td><td></td><td><span class="icon-apple"></td>
+						<td>WeMacro Rail driver (bluetooth)
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_mac_drivers/focuser_wemacro_bt/README.md">Read more »</a>
+						</td></tr>
+
+						<tr><td>indigo_focuser_dmfc</td><td><span class="icon-linux"></td><td><span class="icon-apple"></td>
+						<td>PegasusAstro DMFC focuser driver
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/focuser_dmfc/README.md">Read more »</a>
+						</td></tr>
+
+						<tr><td>indigo_focuser_nstep</td><td><span class="icon-linux"></td><td><span class="icon-apple"></td>
+						<td>RigelSys nSTEP focuser driver
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/focuser_nstep/README.md">Read more »</a>
+						</td></tr>
+
+						<tr><td>indigo_focuser_nfocus</td><td><span class="icon-linux"></td><td><span class="icon-apple"></td>
+						<td>RigelSys nFOCUS focuser driver
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/focuser_nfocus/README.md">Read more »</a>
+						</td></tr>
+
+						<tr><td>indigo_focuser_moonlite</td><td><span class="icon-linux"></td><td><span class="icon-apple"></td>
+						<td>MoonLite focuser driver
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/focuser_moonlite/README.md">Read more »</a>
+						</td></tr>
+
+						<tr><td>indigo_focuser_robofocus</td><td><span class="icon-linux"></td><td><span class="icon-apple"></td>
+						<td>RoboFocus focuser driver
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/focuser_robofocus/README.md">Read more »</a>
+						</td></tr>
+
+						<tr><td>indigo_focuser_mjkzz</td><td><span class="icon-linux"></td><td><span class="icon-apple"></td>
+						<td>MJKZZ macro rail driver
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/focuser_mjkzz/README.md">Read more »</a>
+						</td></tr>
+
+						<tr><td>indigo_focuser_mjkzz_bt</td><td></td><td><span class="icon-apple"></td>
+						<td>MJKZZ macro rail driver (bluetooth)
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/focuser_mjkzz/README.md">Read more »</a>
+						</td></tr>
+
+						<tr><td>indigo_focuser_optec</td><td><span class="icon-linux"></td><td><span class="icon-apple"></td>
+						<td>Optec focuser driver (untested)
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/focuser_optec/README.md">Read more »</a>
+						</td></tr>
+
+						<tr><td>indigo_focuser_lakeside</td><td><span class="icon-linux"></td><td><span class="icon-apple"></td>
+						<td>LakesideAstro focuser driver (untested)
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/focuser_lakeside/README.md">Read more »</a>
+						</td></tr>
+
+						<tr><td>indigo_focuser_dsd</td><td><span class="icon-linux"></td><td><span class="icon-apple"></td>
+						<td>Deep Sky Dad AF1, AF2 and AF3 focuser driver
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/focuser_dsd/README.md">Read more »</a>
+						</td></tr>
+
+						<tr><td>indigo_focuser_steeldrive2</td><td><span class="icon-linux"></td><td><span class="icon-apple"></td>
+						<td>Baader Planetarium SteelDrive II focuser driver
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/focuser_steeldrive2/README.md">Read more »</a>
+						</td></tr>
+
+						<tr><td>indigo_focuser_focusdreampro</td><td><span class="icon-linux"></td><td><span class="icon-apple"></td>
+						<td>AstroGadget FocusDreamPro focuser driver
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/focuser_focusdreampro/README.md">Read more »</a>
+						</td></tr>
+
+						<tr><td>indigo_focuser_efa</td><td><span class="icon-linux"></td><td><span class="icon-apple"></td>
+						<td>PlaneWave/Celestron focuser driver
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/focuser_efa/README.md">Read more »</a>
+						</td></tr>
+
+						<tr><td>indigo_focuser_lunatico</td><td><span class="icon-linux"></td><td><span class="icon-apple"></td>
+						<td>Lunatico Limpet/Armadillo/Platypus Focuser driver
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/focuser_lunatico/README.md">Read more »</a>
+						</td></tr>
+
+						<tr><td>indigo_focuser_mypro2</td><td><span class="icon-linux"></td><td><span class="icon-apple"></td>
+						<td>myFocuserPro2 focuser driver
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/focuser_mypro2/README.md">Read more »</a>
+						</td></tr>
+
+						<tr><td>indigo_focuser_astromechanics</td><td><span class="icon-linux"></td><td><span class="icon-apple"></td>
+						<td>ASTROMECHANICS focuser driver
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/focuser_astromechanics/README.md">Read more »</a>
+						</td></tr>
+
+						<tr><td>indigo_rotator_simulator</td><td><span class="icon-linux"></td><td><span class="icon-apple"></td>
+						<td>Rotator simulator driver
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/rotator_simulator/README.md">Read more »</a>
+						</td></tr>
+
+						<tr><td>indigo_rotator_lunatico</td><td><span class="icon-linux"></td><td><span class="icon-apple"></td>
+						<td>Lunatico Limpet/Armadillo/Platypus Rotator driver
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/rotator_lunatico/README.md">Read more »</a>
+						</td></tr>
+
+						<tr><td>indigo_mount_lx200</td><td><span class="icon-linux"></td><td><span class="icon-apple"></td>
+						<td>LX200 mount driver
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/mount_lx200/README.md">Read more »</a>
+						</td></tr>
+
+						<tr><td>indigo_mount_nexstar</td><td><span class="icon-linux"></td><td><span class="icon-apple"></td>
+						<td>NexStar mount driver
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/mount_nexstar/README.md">Read more »</a>
+						</td></tr>
+
+						<tr><td>indigo_mount_nexstaraux</td><td><span class="icon-linux"></td><td><span class="icon-apple"></td>
+						<td>NexStarAUX (WiFi) mount driver
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/mount_nexstaraux/README.md">Read more »</a>
+						</td></tr>
+
+						<tr><td>indigo_mount_temma</td><td><span class="icon-linux"></td><td><span class="icon-apple"></td>
+						<td>Takahashi Temma mount driver
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/mount_temma/README.md">Read more »</a>
+						</td></tr>
+
+						<tr><td>indigo_mount_simulator</td><td><span class="icon-linux"></td><td><span class="icon-apple"></td>
+						<td>Mount simulator driver
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/mount_simulator/README.md">Read more »</a>
+						</td></tr>
+
+						<tr><td>indigo_mount_ioptron</td><td><span class="icon-linux"></td><td><span class="icon-apple"></td>
+						<td>iOptron Mount driver
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/mount_ioptron/README.md">Read more »</a>
+						</td></tr>
+
+						<tr><td>indigo_mount_synscan</td><td><span class="icon-linux"></td><td><span class="icon-apple"></td>
+						<td>SynScan/EQDir mount driver
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/mount_synscan/README.md">Read more »</a>
+						</td></tr>
+
+						<tr><td>indigo_mount_pmc8</td><td><span class="icon-linux"></td><td><span class="icon-apple"></td>
+						<td>PMC8 mount controller driver
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/mount_pmc8/README.md">Read more »</a>
+						</td></tr>
+
+						<tr><td>indigo_mount_rainbow</td><td><span class="icon-linux"></td><td><span class="icon-apple"></td>
+						<td>RainbowAstro mount driver
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/mount_rainbow/README.md">Read more »</a>
+						</td></tr>
+
+						<tr><td>indigo_gps_simulator</td><td><span class="icon-linux"></td><td><span class="icon-apple"></td>
+						<td>GPS Simulator driver
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/gps_simulator/README.md">Read more »</a>
+						</td></tr>
+
+						<tr><td>indigo_gps_nmea</td><td><span class="icon-linux"></td><td><span class="icon-apple"></td>
+						<td>Generic NMEA 0183 GPS driver
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/gps_nmea/README.md">Read more »</a>
+						</td></tr>
+
+						<tr><td>indigo_gps_gpsd</td><td><span class="icon-linux"></td><td><span class="icon-apple"></td>
+						<td>GPS Service Daemon (GPSD) client driver
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/gps_gpsd/README.md">Read more »</a>
+						</td></tr>
+
+						<tr><td>indigo_aux_joystick</td><td><span class="icon-linux"></td><td><span class="icon-apple"></td>
+						<td>HID Joystick driver
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/aux_joystick/README.md">Read more »</a>
+						</td></tr>
+
+						<tr><td>indigo_aux_rts</td><td><span class="icon-linux"></td><td><span class="icon-apple"></td>
+						<td>RTS-on-COM shutter driver
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/aux_rts/README.md">Read more »</a>
+						</td></tr>
+
+						<tr><td>indigo_aux_dsusb</td><td><span class="icon-linux"></td><td><span class="icon-apple"></td>
+						<td>Shoestring DSUSB shutter driver
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/aux_dsusb/README.md">Read more »</a>
+						</td></tr>
+
+						<tr><td>indigo_aux_sqm</td><td><span class="icon-linux"></td><td><span class="icon-apple"></td>
+						<td>Unihedron SQM sky quality meter driver
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/aux_sqm/README.md">Read more »</a>
+						</td></tr>
+
+						<tr><td>indigo_aux_sqm</td><td><span class="icon-linux"></td><td><span class="icon-apple"></td>
+						<td>Unihedron SQM sky quality meter driver
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/aux_sqm/README.md">Read more »</a>
+						</td></tr>
+
+						<tr><td>indigo_aux_astromechanics</td><td><span class="icon-linux"></td><td><span class="icon-apple"></td>
+						<td>ASTROMECHANICS Light Pollution Meter driver
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/aux_astromechanics/README.md">Read more »</a>
+						</td></tr>
+
+						<tr><td>indigo_aux_ppb</td><td><span class="icon-linux"></td><td><span class="icon-apple"></td>
+						<td>PegasusAstro Pocket Powerbox driver
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/aux_ppb/README.md">Read more »</a>
+						</td></tr>
+
+						<tr><td>indigo_aux_arteskyflat</td><td><span class="icon-linux"></td><td><span class="icon-apple"></td>
+						<td>Artesky flatbox driver
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/aux_arteskyflat/README.md">Read more »</a>
+						</td></tr>
+
+						<tr><td>indigo_aux_flatmaster</td><td><span class="icon-linux"></td><td><span class="icon-apple"></td>
+						<td>Pegasus FlatMaster driver
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/aux_flatmaster/README.md">Read more »</a>
+						</td></tr>
+
+						<tr><td>indigo_aux_fbc</td><td><span class="icon-linux"></td><td><span class="icon-apple"></td>
+						<td>Lacerta Flat Box Controller driver
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/aux_fbc/README.md">Read more »</a>
+						</td></tr>
+
+						<tr><td>indigo_aux_flipflat</td><td><span class="icon-linux"></td><td><span class="icon-apple"></td>
+						<td>Optec Flip-Flat driver
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/aux_flipflat/README.md">Read more »</a>
+						</td></tr>
+						
+						<tr><td>indigo_aux_geoptikflat</td><td><span class="icon-linux"></td><td><span class="icon-apple"></td>
+						<td>Geoptik Flat Field Generator driver
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/aux_geoptikflat/README.md">Read more »</a>
+						</td></tr>
+
+						<tr><td>indigo_aux_usbdp</td><td><span class="icon-linux"></td><td><span class="icon-apple"></td>
+						<td>USB_Dewpoint V1 and V2 driver
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/aux_usbdp/README.md">Read more »</a>
+						</td></tr>
+					
+						<tr><td>indigo_aux_cloudwatcher</td><td><span class="icon-linux"></td><td><span class="icon-apple"></td>
+						<td>Lunatico AAG CloudWatcher driver
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/aux_cloudwatcher/README.md">Read more »</a>
+						</td></tr>
+					
+						<tr><td>indigo_aux_dragonfly</td><td><span class="icon-linux"></td><td><span class="icon-apple"></td>
+						<td>Lunatico Astronomia Dragonfly Relay controller driver
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/aux_dragonfly/README.md">Read more »</a>
+						</td></tr>
+					
+						<tr><td>indigo_aux_mgbox</td><td><span class="icon-linux"></td><td><span class="icon-apple"></td>
+						<td>Astromi.ch MGBox v1/v2, MBox, MGPBox and PBox driver
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/aux_mgbox/README.md">Read more »</a>
+						</td></tr>
+
+						<tr><td>indigo_dome_nexdome</td><td><span class="icon-linux"></td><td><span class="icon-apple"></td>
+						<td>NexDome Dome driver (based on G.Rozema's firmware)
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/dome_nexdome/README.md">Read more »</a>
+						</td></tr>
+
+						<tr><td>indigo_dome_nexdome3</td><td><span class="icon-linux"></td><td><span class="icon-apple"></td>
+						<td>NexDome Dome driver (requires firmware v.3.0.0 or newer)
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/dome_nexdome3/README.md">Read more »</a>
+						</td></tr>
+					
+						<tr><td>indigo_dome_beaver</td><td><span class="icon-linux"></td><td><span class="icon-apple"></td>
+						<td>NexDome Dome driver with Beaver Controller
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/dome_beaver/README.md">Read more »</a>
+						</td></tr>
+					
+						<tr><td>indigo_dome_dragonfly</td><td><span class="icon-linux"></td><td><span class="icon-apple"></td>
+						<td>Lunatico Astronomia Dragonfly Dome / Relay controller driver
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/dome_dragonfly/README.md">Read more »</a>
+						</td></tr>
+					
+						<tr><td>indigo_dome_baader</td><td><span class="icon-linux"></td><td><span class="icon-apple"></td>
+						<td>Baader Planetariun Classic Dome driver
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/dome_baader/README.md">Read more »</a>
+						</td></tr>
+
+
+						<tr><td>indigo_system_ascol</td><td><span class="icon-linux"></td><td><span class="icon-apple"></td>
+						<td>Modernised 2-m Class Zeiss Telescope Systems
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/system_ascol/README.md">Read more »</a>
+						</td></tr>
+
+					</table>
+					<br/>
+				</div>
+			</div>
+			
+			<div class="row">
+				<h3>The list of agents distributed with INDIGO 2.0-154</h3>
+				<div class="col-sm-12">
+					<table border="0">
+					
+						<tr><td width="200px">indigo_agent_alignment</td><td><span class="icon-linux"></td><td><span class="icon-apple"></td>
+						<td width="700px">Mount alignment model calibration agent
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/agent_alignment/README.md">Read more »</a>
+						</td></tr>
+
+						<tr><td>indigo_agent_alpaca</td><td width="20px"><span class="icon-linux"></td><td width="50px"><span class="icon-apple"></td>
+						<td>INDIGO - ASCOM Alpaca bridge agent
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/agent_alpaca/README.md">Read more »</a>
+						</td></tr>
+
+						<tr><td>indigo_agent_astrometry</td><td width="20px"><span class="icon-linux"></td><td width="50px"><span class="icon-apple"></td>
+						<td>Astrometry.net platesolver agent
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/agent_astrometry/README.md">Read more »</a>
+						</td></tr>
+						
+						<tr><td>indigo_agent_auxiliary</td><td width="20px"><span class="icon-linux"></td><td width="50px"><span class="icon-apple"></td>
+						<td>Auxiliary devices agent
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/agent_auxiliary/README.md">Read more »</a>
+						</td></tr>
+						
+						<tr><td>indigo_agent_guider</td><td width="20px"><span class="icon-linux"></td><td width="50px"><span class="icon-apple"></td>
+						<td>Indigo Auto Guider agent
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/agent_guider/README.md">Read more »</a>
+						</td></tr>
+						
+						<tr><td>indigo_agent_imager</td><td width="20px"><span class="icon-linux"></td><td width="50px"><span class="icon-apple"></td>
+						<td>Indigo Imager agent
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/agent_imager/README.md">Read more »</a>
+						</td></tr>
+						
+						<tr><td>indigo_agent_lx200_server</td><td width="20px"><span class="icon-linux"></td><td width="50px"><span class="icon-apple"></td>
+						<td>LX200 Server agent
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/agent_lx200_server/README.md">Read more »</a>
+						</td></tr>
+						
+						<tr><td>indigo_agent_mount</td><td width="20px"><span class="icon-linux"></td><td width="50px"><span class="icon-apple"></td>
+						<td>Mount control agent
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/agent_mount/README.md">Read more »</a>
+						</td></tr>
+						
+						<tr><td>indigo_agent_scripting</td><td width="20px"><span class="icon-linux"></td><td width="50px"><span class="icon-apple"></td>
+						<td>Indigo scripting engine agent
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/agent_scripting/README.md">Read more »</a>
+						</td></tr>
+						
+						<tr><td>indigo_agent_snoop</td><td width="20px"><span class="icon-linux"></td><td width="50px"><span class="icon-apple"></td>
+						<td>Property Snooping agent
+						<a class="pull-right" target= "_new" href="https://github.com/indigo-astronomy/indigo/blob/master/indigo_drivers/agent_snoop/README.md">Read more »</a>
+						</td></tr>
+					</table>
+					<br/>
+				</div>
+			</div>
+		</div>
+
+		<footer class="footer">
+			<div class="container">
+				<p class="social">
+					<a href="https://github.com/indigo-astronomy/indigo" target="_blank" title="Visit us on GitHub"><span class="icon-github"></span></a>
+					<a href="https://www.facebook.com/Linux-Mac-Astronomy-1437544996488964/" target="_blank" title="Visit us on Facebook"><span class="icon-facebook"></span></a>
+					<a href="http://bb.cloudmakers.eu/" target="_blank" title="Visit INDIGO user group"><span class="icon-chat"></span></a>
+				</p>
+				<p class="copyright">Copyright &copy; 2016-2021, The INDIGO Initiative. All rights reserved.</p>
+			</div>
+		</footer>
+		<script src="js/jquery.min.js"></script>
+		<script src="js/bootstrap.min.js"></script>
+	</body>
+
+</html>
