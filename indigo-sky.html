@@ -95,7 +95,7 @@
 					Unpack it, copy it to SD card following the
 					<a target="_new" href="https://www.raspberrypi.org/documentation/installation/installing-images/">instructions</a>
 					at Raspberry Pi site and boot from it. First boot will take longer (several minutes) as INDIGO Sky will automatically
-					expand the file system to the size of the SD card and after that it will start INDIGO and provide a WiFi access point.</p> 
+					expand the file system to the size of the SD card and after that it will start INDIGO and provide a WiFi access point.</p>
 					<p>INDIGO Sky access point has the following default credentials:</p>
 					<p><mark>SSID: indigosky</mark></p>
 					<p><mark>password: indigosky</mark></p>
@@ -105,14 +105,14 @@
 					If the device is connected via Ethernet cable to your home network, you must use the IP address assigned by
 					your router and the same port as above to access the web GUI.</p>
 
-					<p><B>NOTE for Microsoft Edge users:</B> Some people reported reconnects every 30s when using Microsoft Edge 
+					<p><B>NOTE for Microsoft Edge users:</B> Some people reported reconnects every 30s when using Microsoft Edge
 					browser. The issue is in the websockets implementation in Edge, and there is nothing we can do about that.
 					The only solution is to use another browser like Chromium, Chrome, Safari, Firefox etc.</p>
 
-					<p>If you want to boot INDIGO Sky from USB please see the instructions 
+					<p>If you want to boot INDIGO Sky from USB please see the instructions
 					<a href="https://github.com/indigo-astronomy/indigosky/blob/master/INSTALL.md">here</a>.</p>
 					<p><center><img width="50%" src="img/indigo-sky.jpg"></center></p>
-				
+
 					<h3>Change Password or SSID</h3>
 					<p>It is strongly recommended to change the password. Open your browser and visit
 					web GUI to open the INDIGO web manager.</p>
@@ -123,7 +123,7 @@
 					Then click on the "Submit" button. If the operation cannot be committed, e.g.
 					due to a too short password, you should see an alert. In this case start over and
 					if everything is fine, wait for reboot with the new WiFi configuration.</p>
-					
+
 					<h3>Connect INDIGO Sky to an Infrastructure Access Point</h3>
 					<p>INDIGO Sky can also be configured for connecting to an infrastructure access point.</p>
 
@@ -134,7 +134,7 @@
 					configuration. If you entered values incorrectly and INDIGO Sky cannot connect
 					to the infrastructure access point, then connect via ethernet cable to INDIGO Sky
 					and update the credentials.</p>
-			
+
 					<h3>Share Internet connection between interfaces</h3>
 					<p>INDIGO Sky can share Internet connection avalable on one of its interfaces.
 					For example, if the Wi-Fi interface is configured in Access Point (AP) mode,
@@ -143,14 +143,14 @@
 
 					<p><center><img width="50%" src="img/internet-sharing.png"></center></p>
 
-					<p>To enable or disable Internet sharing, set "Server->Main->Internet Sharing" to 
+					<p>To enable or disable Internet sharing, set "Server->Main->Internet Sharing" to
 					"Enabled" or "Disabled" respectively.</p>
 					<p><b>NOTE:</b> Use this fearure with care and enable Internet sharing only after
 					changing the default Indigo AP password.</p>
 
 					<h3>Upgrade or downgrade INDIGO</h3>
 					<p>INDIGO Sky allows to downgrade or upgrade INDIGO versions easily.</p>
-					
+
 					<p>Whenever INDIGO Sky is started, the Internet connection is checked and new update package
 					index files are fetched from the
 					<a href="http://www.indigo-astronomy.org/downloads.html">INDIGO package server</a>.
@@ -163,7 +163,7 @@
 					<h3>Timezone and Date</h3>
 					<p>INDIGO Sky timezone is UTC. This timezone is suitable for precise astronomical calculations and
 					representations of timestamps in FITS data.</p>
-					
+
 					<p>If INDIGO Sky is started and no Internet connection is available,
 					the previously saved date and time is used prevent the clock from being reset.
 					That won't advance time while the device is off, so it will lag behind.
@@ -174,12 +174,12 @@
 
 					<h3>Remote control with built-in webGUI</h3>
 					<p>The server can be configured and used with a built-in webGUI providing the basic control of imager, guider and mount agents.</p>
-					
+
 					<p><center><img width="50%" src="img/indigosky1.jpg"/></center></p>
-          <p><center><img width="50%" src="img/indigosky2.jpg"/></center></p>
-          <p><center><img width="50%" src="img/indigosky4.jpg"/></center></p>
-          <p><center><img width="50%" src="img/indigosky3.jpg"/></center></p>
-			
+					<p><center><img width="50%" src="img/indigosky2.jpg"/></center></p>
+					<p><center><img width="50%" src="img/indigosky4.jpg"/></center></p>
+					<p><center><img width="50%" src="img/indigosky3.jpg"/></center></p>
+
 					<h3>Remote control with INDIGO Control Panel</h3>
 					<p>The server can be configured with INDIGO Control Panel (avalilable on our <a href="downloads.html">Downloads page</a>).
 					In this case it should automatically detect and connect to INDIGO Sky.</p>
@@ -190,29 +190,29 @@
 					<p><mark>username: indigo</mark></p>
 					<p><mark>password: indigo</mark></p>
 					<p><b>NOTE:</b> Windows users need to install SSH client like <a href="https://www.putty.org/">PuTTY</a></p>
-					
+
 					<h3>Use INDIGO Sky with mobile devices </h3>
 					<p><b style="color:red">The current insigosky-desktop should work with the test INSIGOSky images based on Debian 11. However there may be some glitches.</b>
 					<p>There are still no native INDIGO clients for mobile devices but we offer a workaround - using a lightweight
-					desktop on the Raspberry Pi which can be accessed using a Remote desktop. This is not the best approach but 
+					desktop on the Raspberry Pi which can be accessed using a Remote desktop. This is not the best approach but
 					several similar distributions offer similar solutions. In contrast we do not want to bloat our operating
 					system image and load the tiny Raspberry Pi board with something most users will never need, therefore this
 					is optional.
 					<p> To enable this option, please login to the INDIGO Sky as descibed above and execute:</p>
-					
+
 					<p><mark>$ sudo apt-get update</mark></p>
 					<p><mark>$ sudo apt-get install indigosky-desktop</mark></p>
-					
+
 					<p>This will install about 1GB of additional software including INDIGO Control Panel and Ain Imager,
 					so it will take some time to complete. When finished you can access your INDIGO Sky box with any VNC client.
 					This is how it looks in action:</p>
-					
+
 					<p><center><img width="50%" src="img/indigosky_desktop.png"></center></p>
 
 					<p>The credentials to access the desktop are standard. If your VNC client supports authentication with system
 					credentials (TLSplan) you can access the desktop with the credentials used for SSH and when you change the default
 					password you must use the changed one. If this authentication method is not supported by your client, VncAuth
-					authentication will be used with another passwrd, which also defauts to "indigo". In this case when the system 
+					authentication will be used with another passwrd, which also defauts to "indigo". In this case when the system
 					password is changed the VNC password will remain the same. You will have to change it on the console with the
 					command "vncpasswd".</p>
 					<p><b>NOTE:</b> With CPU intensive tasks on Raspberry Pi4 you may experience cooling issues.
@@ -220,24 +220,66 @@
 					is being throttled down in order to cool. To avid this issue we highly recommend using a cooling solution. If you are
 					uing the official Pi4 case the <a target="_blank" href="https://www.raspberrypi.org/products/raspberry-pi-4-case-fan">Pi4 case fan</a>
 					should work.</p>
-					
+
 					<p>To remove the remote desktop access and the related software you should execute the following commands:</p>
 					<p><mark>$ sudo apt-get remove indigosky-desktop</mark></p>
 					<p><mark>$ sudo apt-get autoremove</mark></p>
-					
-					<h3>In case the server stops responding</h3>
+
+					<h3 id="issues">Reporting issues</h3>
+					<h4><b>In case the server stops responding</b></h3>
 					<p>Please login to the	INDIGO Sky as descibed above and execute:</p>
 					<p><mark>$ indigo_deadlock_detector >indigo_deadlock.txt</mark></p>
 					<p>This will create a file named 'indigo_deadlock.txt', please send it to
 					<a href="mailto:indigo@cloudmakers.eu">indigo@cloudmakers.eu</a> accompanied by a description of the problem and
 					if possible, steps to reproduce it. We need this information to resolve the problem.</p>
 					<p>For more iformation about the tool please see <a href="https://github.com/indigo-astronomy/indigo_deadlock_detector/blob/master/README.md"> INDIGO deadlock detector README</a>.</p>
-					
+
 					<p><b>NOTE:</b> INDIGO deadlock detector is available by default in INDIGO Sky 2020-11-01 or newer. If you are
 					running older image please install it:</p>
 					<p><mark>$ sudo apt-get update</mark></p>
 					<p><mark>$ sudo apt-get install indigo-deadlock-detector</mark></p>
-				</div>				
+
+					<br>
+
+					<h4><b>Getting INDIGO log from INDIGO Sky</b></h3>
+					In case some device or INDIGO framework does not behave as expected sending us "Trace log" from indigo will help us pinpoint and resolve the issue. To do so please follow the steps:
+					<ol>
+						<li>
+							Enable "Trace log". Open a browser and go to the INDIGO Sky control panel as descrived above (
+							<a href="http://indigosky.local:7624/ctrl.html">http://indigosky.local:7624/ctrl.html</a> or <b>http://x.x.x.x:7624/ctrl.html</b>)
+						</li>
+						<li>
+							Navigate to <b>Server -> Log Level</b> and select <b>Trace</b>.
+						</li>
+						<li>
+							Reproduce the problem.
+						</li>
+						<li>
+							Once the problem is reproduced, download the INDIGO Server log from <a href="http://indigosky.local:7624/log">http://indigosky.local:7624/log</a> or <b>http://x.x.x.x:7624/log</b> and
+							send it to <a href="mailto:indigo@cloudmakers.eu">indigo@cloudmakers.eu</a> accompanied by a description of the problem and
+							if possible, steps to reproduce it.
+						</li>
+					</ol>
+					<p><b>NOTE:</b> replace <b>x.x.x.x</b> with the real INDIGO Sky IP address. The defult is <b>192.168.235.1</b>
+
+					<br>
+					<br>
+					<h4><b>Getting INDIGO log if you start INDIGO server from the command line</b></h3>
+					<ol>
+						<li>
+							Stop all other instances of INDIGO server and start it so that it will save the trace log (switch -vvv) in the file <b>indigo.log</b> with the command:
+							<p><mark>$ indigo_server -vvv [drivers] >indigo.log 2>&1</mark></p>
+							<p><b>NOTE:</b> You may need to specify the full path to INDIGO server. If you ommit drivers it will load the drivers that were loaded last time.
+						</li>
+						<li>
+							Reproduce the problem.
+						</li>
+						<li>
+							Once the problem is reproduced, stop the server with Ctrl-C and send <b>indigo.log</b> to <a href="mailto:indigo@cloudmakers.eu">indigo@cloudmakers.eu</a>
+							accompanied by a description of the problem, and if possible, steps to reproduce it.
+						</li>
+					</ol>
+				</div>
 			</div>
 		</div>
 
