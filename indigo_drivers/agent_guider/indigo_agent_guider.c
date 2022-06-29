@@ -190,6 +190,15 @@ static void save_config(indigo_device *device) {
 }
 
 static indigo_property_state capture_raw_frame(indigo_device *device) {
+	struct timeval tv;
+	gettimeofday(&tv, NULL);
+	double capture_end = tv.tv_usec/1000000.0 + tv.tv_sec;
+	static double capture_begin = 0;
+	if (capture_end > capture_begin) {
+		double fps = 1/(capture_end - capture_begin);
+		indigo_log("frame rate = %.2lf fps", fps);
+		capture_begin = capture_end;
+	}
 	char *ccd_name = FILTER_DEVICE_CONTEXT->device_name[INDIGO_FILTER_CCD_INDEX];
 	indigo_property_state state = INDIGO_ALERT_STATE;
 	indigo_property *device_exposure_property, *agent_exposure_property, *device_format_property;
