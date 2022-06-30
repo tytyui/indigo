@@ -196,7 +196,8 @@ static indigo_property_state capture_raw_frame(indigo_device *device) {
 	static double capture_begin = 0;
 	if (capture_end > capture_begin) {
 		double fps = 1/(capture_end - capture_begin);
-		indigo_log("frame rate = %.2lf fps", fps);
+		//indigo_log("frame rate = %.2lf fps", fps);
+		indigo_send_message(device, "frame rate = %.2lf fps", fps);
 		capture_begin = capture_end;
 	}
 	char *ccd_name = FILTER_DEVICE_CONTEXT->device_name[INDIGO_FILTER_CCD_INDEX];
