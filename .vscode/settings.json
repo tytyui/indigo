@@ -1,5 +1,6 @@
 {
     "files.associations": {
-        "indigo_driver_xml.h": "c"
+        "indigo_driver_xml.h": "c",
+        "indigo_driver.h": "c"
     }
 }

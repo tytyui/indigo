@@ -172,7 +172,7 @@ static indigo_result focuser_enumerate_properties(indigo_device * device, indigo
 
 static indigo_result focuser_change_property(indigo_device * device, indigo_client * client, indigo_property * property)
 {
-
+    return INDIGO_OK;
 }
 
 static indigo_result focuser_detach(indigo_device * device)
