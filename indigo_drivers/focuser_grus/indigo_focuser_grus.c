@@ -63,6 +63,34 @@
 #define X_SETTLE_TIME_PROPERTY_NAME         "X_SETTLE_TIME"
 #define X_SETTLE_TIME_ITEM_NAME             "SETTLE_TIME"
 
+#define X_SPEED_MODE_1_ITEM                 (FOCUSER_SPEED_PROPERTY->items+0)
+#define X_SPEED_MODE_2_ITEM                 (FOCUSER_SPEED_PROPERTY->items+1)
+#define X_SPEED_MODE_4_ITEM                 (FOCUSER_SPEED_PROPERTY->items+2)
+#define X_SPEED_MODE_8_ITEM                 (FOCUSER_SPEED_PROPERTY->items+3)
+#define X_SPEED_MODE_16_ITEM                (FOCUSER_SPEED_PROPERTY->items+4)
+
+#define X_SPEED_MODE_1_ITEM_NAME            "SPEED_MODE_1"
+#define X_SPEED_MODE_2_ITEM_NAME            "SPEED_MODE_2"
+#define X_SPEED_MODE_4_ITEM_NAME            "SPEED_MODE_4"
+#define X_SPEED_MODE_8_ITEM_NAME            "SPEED_MODE_8"
+#define X_SPEED_MODE_16_ITEM_NAME           "SPEED_MODE_16"
+
+#define X_BACKLASH_ENABLE_PROPERTY          (PRIVATE_DATA->backlash_enable_property)
+#define X_BACKLASH_ENABLE_IN_ITEM           (X_BACKLASH_ENABLE_PROPERTY->items+0)
+#define X_BACKLASH_ENABLE_OUT_ITEM          (X_BACKLASH_ENABLE_PROPERTY->items+1)
+
+#define X_BACKLASH_PROPERTY                 (PRIVATE_DATA->backlash_property)
+#define X_BACKLASH_IN_ITEM                  (X_BACKLASH_PROPERTY->items+0)
+#define X_BACKLASH_OUT_ITEM                 (X_BACKLASH_PROPERTY->items+1)
+
+#define X_BACKLASH_ENABLE_PROPERTY_NAME     "X_BACKLASH_ENABLE"
+#define X_BACKLASH_ENABLE_IN_ITEM_NAME      "BACKLASH_ENABLE_IN"
+#define X_BACKLASH_ENABLE_OUT_ITEM_NAME     "BACKLASH_ENABLE_OUT"
+#define X_BACKLASH_PROPERTY_NAME            "X_BACKLASH_IN"
+#define X_BACKLASH_IN_ITEM_NAME             "BACKLASH_IN"
+#define X_BACKLASH_OUT_ITEM_NAME            "BACKLASH_OUT"
+
+#define GRUS_COMMAND(dev,cmd)               grus_command(dev, cmd, NULL, 0, 200)
 
 typedef struct
 {
@@ -70,12 +98,38 @@ typedef struct
     uint32_t current_position;
     uint32_t target_position;
     uint32_t max_position;
+    bool poitive_last_move;
     indigo_timer * focuser_timer;
     indigo_timer * temperature_timer;
     indigo_property * motor_mode_property;
     indigo_property * settle_time_property;
+    indigo_property * backlash_enable_property;
+    indigo_property * backlash_property;
     pthread_mutex_t port_mutex;
 } grus_private_data;
+
+typedef enum
+{
+    MOTOR_MODE_IDLE_OFF,
+    MOTOR_MODE_ALWAYS_ON
+} motormode_t;
+
+typedef enum
+{
+    SPEED_MODE_1 = 1,
+    SPEED_MODE_2 = 2,
+    SPEED_MODE_4 = 4,
+    SPEED_MODE_8 = 8,
+    SPEED_MODE_16 = 16
+} speedmode_t;
+
+typedef enum
+{
+    BACKLASH_IN = 1,
+    BACKLASH_OUT =2
+} backlash_type_t;
+
+#define NO_TEMP_READ (-127)
 
 static bool grus_command(indigo_device * device, const char * command, char * response, int max, int sleep)
 {
@@ -140,32 +194,99 @@ static bool grus_command(indigo_device * device, const char * command, char * re
     return true;
 }
 
+static bool grus_command_get_int_value(indigo_device * device, const char * command, char expect, uint32_t * value)
+{
+    if(!value)  return false;
+    char response[GRUS_CMD_LEN] = {0};
+    if(grus_command(device, command, response, GRUS_CMD_LEN, 200))
+    {
+        char format[GRUS_CMD_LEN];
+        sprintf(format, ":%c%%06d#", expect);
+        int parsed = sscanf(response, format, value);
+        if(parsed != 1) return false;
+        DRV_DEBUG("%s -> %s = %d", command, response, *value);
+        return true;
+    }
+    DRV_ERROR("No Response");
+    return false;
+}
+
+static bool grus_command_valid(indigo_device * device, const char * command, char expect)
+{
+    uint32_t value;
+    return grus_command_get_int_value(device, command, expect, &value);
+}
+
 static bool grus_set_reverse(indigo_device * device, bool enabled)
 {
-    char command[GRUS_CMD_LEN];
-    snprintf(command, GRUS_CMD_LEN, ":R00000%d#", enabled? 1 : 0);
-    char response[GRUS_CMD_LEN] = {0};
-    return grus_command(device, command, response, 0, 200);
+    char cmd[GRUS_CMD_LEN];
+    snprintf(cmd, GRUS_CMD_LEN, ":R%06d#", enabled? 1 : 0);
+    return grus_command_valid(device, cmd, 'R');
 }
 
-//TODO
 static bool grus_goto_position(indigo_device * device, uint32_t position)
 {
-    return false;
+    char cmd[GRUS_CMD_LEN];
+    snprintf(cmd, GRUS_CMD_LEN, ":G%06d#", position);
+    return GRUS_COMMAND(device, cmd);
 }
 
-//TODO
+static bool grus_goto_position_comp(indigo_device * device, uint32_t position)
+{
+    uint32_t target_position = 
+        indigo_compensate_backlash(
+            position,
+            (int)PRIVATE_DATA->current_position,
+            (int)FOCUSER_BACKLASH_ITEM->number.value,
+            &PRIVATE_DATA->poitive_last_move);
+    return grus_goto_position(device, target_position);
+}
+
 static bool grus_sync_position(indigo_device * device, uint32_t position)
 {
-    return false;
+    char cmd[GRUS_CMD_LEN];
+    snprintf(cmd, GRUS_CMD_LEN, ":S%06d#", position);
+    return grus_command_valid(device, cmd, 'D');
 }
 
-//TODO
 static bool grus_get_position(indigo_device * device, uint32_t * position)
 {
-    return false;
+    return grus_command_get_int_value(device, ":S000000#", 'D', position);
 }
 
+static bool grus_set_max_position(indigo_device * device, int position)
+{
+    char cmd[GRUS_CMD_LEN];
+    snprintf(cmd, GRUS_CMD_LEN, ":L%06d#", position);
+    return grus_command_valid(device, cmd, 'L');
+}
+
+static bool grus_get_max_position(indigo_device * device, int * position)
+{
+    return grus_command_get_int_value(device, ":L000000", 'L', position);
+}
+
+static bool grus_set_speed(indigo_device * device, int speed)
+{
+    char cmd[GRUS_CMD_LEN];
+    snprintf(cmd, GRUS_CMD_LEN, ":Z%06d#", speed);
+    return grus_command_valid(device, cmd, 'Z');
+}
+
+static bool grus_get_speed(indigo_device * device, int * speed)
+{
+    return grus_command_get_int_value(device, ":Z000000#", 'Z', speed);
+}
+
+static bool grus_get_motor_mode(indigo_device * device, int * motor_mode)
+{
+    return grus_command_get_int_value(device, ":F000002#", 'F', motor_mode);    
+}
+
+static bool grus_stop(indigo_device * device)
+{
+    return GRUS_COMMAND(device, ":Q000000#");
+}
 //TODO
 static void focuser_connection_handler(indigo_device * device)
 {
@@ -176,6 +297,60 @@ static void focuser_connection_handler(indigo_device * device)
 static void focuser_timer_handler(indigo_device * device)
 {
 
+}
+
+static void update_speed_mode_switches(indigo_device * device)
+{
+    speedmode_t value;
+
+    if(!grus_get_speed(device, &value))
+    {
+        DRV_ERROR("grus_get_speed(%d) failed", PRIVATE_DATA->handle);
+        return;
+    }
+
+    switch (value)
+    {
+        case SPEED_MODE_1:
+            indigo_set_switch(FOCUSER_SPEED_PROPERTY, X_SPEED_MODE_1_ITEM, true);
+            break;
+        case SPEED_MODE_2:
+            indigo_set_switch(FOCUSER_SPEED_PROPERTY, X_SPEED_MODE_2_ITEM, true);
+            break;
+        case SPEED_MODE_4:
+            indigo_set_switch(FOCUSER_SPEED_PROPERTY, X_SPEED_MODE_4_ITEM, true);
+            break;
+        case SPEED_MODE_8:
+            indigo_set_switch(FOCUSER_SPEED_PROPERTY, X_SPEED_MODE_8_ITEM, true);
+            break;
+        case SPEED_MODE_16:
+            indigo_set_switch(FOCUSER_SPEED_PROPERTY, X_SPEED_MODE_16_ITEM, true);
+            break;
+        default:
+            DRV_ERROR("grus_get_speed(%d) wrong value %d", PRIVATE_DATA->handle, value);    
+    }
+}
+
+static void update_motor_mode_switches(indigo_device * device)
+{
+    motormode_t value;
+    if(!grus_get_motor_mode(device, &value))
+    {
+        DRV_ERROR("grus_get_motor_mode(%d) failed", PRIVATE_DATA->handle);
+        return;
+    }
+
+    switch (value)
+    {
+        case MOTOR_MODE_IDLE_OFF:
+            indigo_set_switch(X_MOTOR_MODE_PROPERTY, X_MOTOR_MODE_IDLE_OFF_ITEM, true);
+            break;
+        case MOTOR_MODE_ALWAYS_ON:
+            indigo_set_switch(X_MOTOR_MODE_PROPERTY, X_MOTOR_MODE_ALWAYS_ON_ITEM, true);
+            break;
+        default:
+            DRV_ERROR("grus_get_motor_mode(%d) wrong value %d", PRIVATE_DATA->handle, value);
+    }
 }
 
 static indigo_result focuser_attach(indigo_device * device)
@@ -207,13 +382,6 @@ static indigo_result focuser_attach(indigo_device * device)
         FOCUSER_LIMITS_MIN_POSITION_ITEM->number.step = 1;
         FOCUSER_LIMITS_MIN_POSITION_ITEM->number.value = 0xFFFF;
         FOCUSER_LIMITS_MIN_POSITION_ITEM->number.target = 0xFFFF;
-        //电机速度
-        FOCUSER_SPEED_PROPERTY->hidden = false;
-        FOCUSER_SPEED_ITEM->number.min = 1;
-        FOCUSER_SPEED_ITEM->number.max = 16;
-        FOCUSER_SPEED_ITEM->number.step = 1;
-        FOCUSER_SPEED_ITEM->number.value = 4;
-        FOCUSER_SPEED_ITEM->number.target = 4;
         //位置
         FOCUSER_POSITION_ITEM->number.min = FOCUSER_LIMITS_MIN_POSITION_ITEM->number.value;
         FOCUSER_POSITION_ITEM->number.max = FOCUSER_LIMITS_MAX_POSITION_ITEM->number.value;
@@ -233,7 +401,50 @@ static indigo_result focuser_attach(indigo_device * device)
         FOCUSER_BACKLASH_ITEM->number.target = 0;
 
         ADDITIONAL_INSTANCES_PROPERTY->hidden = DEVICE_CONTEXT->base_device != NULL;
+        //电机速度
+        FOCUSER_SPEED_PROPERTY = indigo_init_switch_property(
+            NULL, device->name,
+            FOCUSER_SPEED_ITEM_NAME,
+            FOCUSER_MAIN_GROUP, 
+            "Focuser speed",
+            INDIGO_OK_STATE,
+            INDIGO_RW_PERM,
+            INDIGO_ONE_OF_MANY_RULE, 5);
+        if(FOCUSER_SPEED_PROPERTY == NULL)
+            return INDIGO_FAILED;
+        FOCUSER_SPEED_PROPERTY->hidden = false;
+        indigo_init_switch_item(X_SPEED_MODE_1_ITEM, X_SPEED_MODE_1_ITEM_NAME, "Speed 1", false);
+        indigo_init_switch_item(X_SPEED_MODE_2_ITEM, X_SPEED_MODE_2_ITEM_NAME, "Speed 2", false);
+        indigo_init_switch_item(X_SPEED_MODE_4_ITEM, X_SPEED_MODE_4_ITEM_NAME, "Speed 4", false);
+        indigo_init_switch_item(X_SPEED_MODE_8_ITEM, X_SPEED_MODE_8_ITEM_NAME, "Speed 8", false);
+        indigo_init_switch_item(X_SPEED_MODE_16_ITEM, X_SPEED_MODE_16_ITEM_NAME, "Speed 16", false);
 
+        //内部回差
+        X_BACKLASH_ENABLE_PROPERTY = indigo_init_switch_property(
+            NULL, device->name,
+            X_BACKLASH_ENABLE_PROPERTY_NAME,
+            "Advance", "Internal Backlash Enable",
+            INDIGO_OK_STATE,
+            INDIGO_RW_PERM,
+            INDIGO_ANY_OF_MANY_RULE, 2);
+        if(X_BACKLASH_ENABLE_PROPERTY == NULL)
+            return INDIGO_FAILED;
+        X_BACKLASH_ENABLE_PROPERTY->hidden = false;
+        indigo_init_switch_item(X_BACKLASH_ENABLE_IN_ITEM, X_BACKLASH_ENABLE_IN_ITEM_NAME, "Enable In", false);
+        indigo_init_switch_item(X_BACKLASH_ENABLE_OUT_ITEM, X_BACKLASH_ENABLE_OUT_ITEM_NAME, "Enable Out", false);
+        
+        X_BACKLASH_PROPERTY = indigo_init_number_property(
+            NULL, device->name,
+            X_BACKLASH_PROPERTY_NAME,
+            "Advanced", "Internel Backlash In",
+            INDIGO_OK_STATE,
+            INDIGO_RW_PERM, 2);
+        if(X_BACKLASH_PROPERTY == NULL)
+            return INDIGO_FAILED;
+        indigo_init_number_item(X_BACKLASH_IN_ITEM, X_BACKLASH_IN_ITEM_NAME, "In Value", 0, 250, 1, 0);
+        indigo_init_number_item(X_BACKLASH_OUT_ITEM, X_BACKLASH_OUT_ITEM_NAME, "Out Value", 0, 250, 1, 0);
+        
+        //电机通电状态
         X_MOTOR_MODE_PROPERTY = indigo_init_switch_property(
             NULL, device->name, 
             X_MOTOR_MODE_PROPERTY_NAME, 
@@ -244,15 +455,10 @@ static indigo_result focuser_attach(indigo_device * device)
         if(X_MOTOR_MODE_PROPERTY == NULL)
             return INDIGO_FAILED;
         X_MOTOR_MODE_PROPERTY->hidden = false;
-        indigo_init_switch_item(
-            X_MOTOR_MODE_IDLE_OFF_ITEM,
-            X_MOTOR_MODE_IDLE_OFF_ITEM_NAME,
-            "OFF When Idle", false);
-        indigo_init_switch_item(
-            X_MOTOR_MODE_ALWAYS_ON_ITEM,
-            X_MOTOR_MODE_ALWAYS_ON_ITEM_NAME,
-            "Always ON", false);
+        indigo_init_switch_item(X_MOTOR_MODE_IDLE_OFF_ITEM, X_MOTOR_MODE_IDLE_OFF_ITEM_NAME, "OFF When Idle", false);
+        indigo_init_switch_item(X_MOTOR_MODE_ALWAYS_ON_ITEM, X_MOTOR_MODE_ALWAYS_ON_ITEM_NAME, "Always ON", false);
         
+        //等待时间
         X_SETTLE_TIME_PROPERTY = indigo_init_number_property(
             NULL, device->name,
             X_SETTLE_TIME_PROPERTY_NAME,
@@ -261,11 +467,7 @@ static indigo_result focuser_attach(indigo_device * device)
             INDIGO_RW_PERM, 1);
         if(X_SETTLE_TIME_PROPERTY == NULL)
             return INDIGO_FAILED;
-        indigo_init_number_item(
-            X_SETTLE_TIME_ITEM,
-            X_SETTLE_TIME_ITEM_NAME,
-            "Settle time (ms)",
-            0, 999, 10, 0);
+        indigo_init_number_item(X_SETTLE_TIME_ITEM, X_SETTLE_TIME_ITEM_NAME, "Settle time (ms)", 0, 999, 10, 0);
 
         pthread_mutex_init(PORT_MUTEX_T, NULL);
         INDIGO_DEVICE_ATTACH_LOG(DRIVER_NAME, device->name);
@@ -319,66 +521,187 @@ static indigo_result focuser_change_property(indigo_device * device, indigo_clie
             FOCUSER_POSITION_ITEM->number.target > FOCUSER_POSITION_ITEM->number.max)
         {
             FOCUSER_POSITION_PROPERTY->state = INDIGO_ALERT_STATE;
+            FOCUSER_STEPS_PROPERTY->state = INDIGO_ALERT_STATE;
             indigo_update_property(device, FOCUSER_POSITION_PROPERTY, NULL);
+            indigo_update_property(device, FOCUSER_STEPS_PROPERTY, NULL);
         }
         else if(FOCUSER_POSITION_ITEM->number.target == PRIVATE_DATA->current_position)
         {
             FOCUSER_POSITION_PROPERTY->state = INDIGO_OK_STATE;
+            FOCUSER_STEPS_PROPERTY->state = INDIGO_OK_STATE;
             indigo_update_property(device, FOCUSER_POSITION_PROPERTY, NULL);
+            indigo_update_property(device, FOCUSER_STEPS_PROPERTY, NULL);
         }
         else
         {
             FOCUSER_POSITION_PROPERTY->state = INDIGO_BUSY_STATE;
+            FOCUSER_STEPS_PROPERTY->state = INDIGO_BUSY_STATE;
             PRIVATE_DATA->target_position = FOCUSER_POSITION_ITEM->number.target;
             FOCUSER_POSITION_ITEM->number.value = PRIVATE_DATA->current_position;
             indigo_update_property(device, FOCUSER_POSITION_PROPERTY, NULL);
+            indigo_update_property(device, FOCUSER_STEPS_PROPERTY, NULL);
+
             if(FOCUSER_ON_POSITION_SET_GOTO_ITEM->sw.value)
             {
                 FOCUSER_POSITION_PROPERTY->state = INDIGO_BUSY_STATE;
-                if(!grus_goto_position(device, (uint32_t)PRIVATE_DATA->target_position))
+                FOCUSER_STEPS_PROPERTY->state = INDIGO_BUSY_STATE;
+                if(!grus_goto_position_comp(device, (uint32_t)PRIVATE_DATA->target_position))
                 {
-                    DRV_ERROR("grus_goto_position(%d, %d) failed", PRIVATE_DATA->handle, PRIVATE_DATA->target_position);
+                    DRV_ERROR("grus_goto_position_comp(%d, %d) failed", PRIVATE_DATA->handle, PRIVATE_DATA->target_position);
                 }
                 indigo_set_timer(device, 0.5, focuser_timer_handler, &PRIVATE_DATA->focuser_timer);
             }
             else
             {
                 FOCUSER_POSITION_PROPERTY->state = INDIGO_OK_STATE;
+                FOCUSER_STEPS_PROPERTY->state = INDIGO_OK_STATE;
                 if(!grus_sync_position(device, PRIVATE_DATA->target_position))
                 {
                     DRV_ERROR("grus_sync_position(%d, %d) failed", PRIVATE_DATA->handle, PRIVATE_DATA->target_position);
                     FOCUSER_POSITION_PROPERTY->state = INDIGO_ALERT_STATE;
+                    FOCUSER_STEPS_PROPERTY->state = INDIGO_ALERT_STATE;
                 }
                 uint32_t position;
                 if(!grus_get_position(device, &position))
                 {
                     DRV_ERROR("grus_get_position(%d) failed", PRIVATE_DATA->handle);
                     FOCUSER_POSITION_PROPERTY->state = INDIGO_ALERT_STATE;
+                    FOCUSER_STEPS_PROPERTY->state = INDIGO_ALERT_STATE;
                 }
                 else
                 {
                     FOCUSER_POSITION_ITEM->number.value = PRIVATE_DATA->current_position = (double)position;
                 }
                 indigo_update_property(device, FOCUSER_POSITION_PROPERTY, NULL);
+                indigo_update_property(device, FOCUSER_STEPS_PROPERTY, NULL);
             }
         }
         return INDIGO_OK;
     }
-    //TODO
     else if(indigo_property_match_changeable(FOCUSER_LIMITS_PROPERTY, property))
     {
+        indigo_property_copy_values(FOCUSER_LIMITS_PROPERTY, property, false);
+        FOCUSER_LIMITS_PROPERTY->state = INDIGO_OK_STATE;
+        PRIVATE_DATA->max_position = (int)FOCUSER_LIMITS_MAX_POSITION_ITEM->number.target;
+        if(!grus_set_max_position(device, PRIVATE_DATA->max_position))
+        {
+            DRV_ERROR("grus_set_max_position(%d) failed", PRIVATE_DATA->handle);
+            FOCUSER_LIMITS_PROPERTY->state = INDIGO_ALERT_STATE;
+        }
+        if(!grus_get_max_position(device, &PRIVATE_DATA->max_position))
+        {
+            DRV_ERROR("grus_get_max_position(%d) failed", PRIVATE_DATA->handle);
+        }
+        FOCUSER_LIMITS_MAX_POSITION_ITEM->number.value = (double)PRIVATE_DATA->max_position;
+        indigo_update_property(device, FOCUSER_LIMITS_PROPERTY, NULL);
         return INDIGO_OK;
     }
     else if(indigo_property_match_changeable(FOCUSER_SPEED_PROPERTY, property))
     {
+        indigo_property_copy_values(FOCUSER_SPEED_PROPERTY, property, false);
+        FOCUSER_SPEED_PROPERTY->state = INDIGO_OK_STATE;
+        speedmode_t mode = SPEED_MODE_4;
+        if(X_SPEED_MODE_1_ITEM->sw.value)
+            mode = SPEED_MODE_1;
+        else if(X_SPEED_MODE_2_ITEM->sw.value)
+            mode = SPEED_MODE_2;
+        else if(X_SPEED_MODE_4_ITEM->sw.value)
+            mode = SPEED_MODE_4;
+        else if(X_SPEED_MODE_8_ITEM->sw.value)
+            mode = SPEED_MODE_8;
+        else if(X_SPEED_MODE_16_ITEM->sw.value)
+            mode = SPEED_MODE_16;
+        if(!grus_set_speed(device, mode))
+        {
+            DRV_ERROR("grus_set_speed(%d, %d) failed", PRIVATE_DATA->handle, mode);
+            FOCUSER_SPEED_PROPERTY->state = INDIGO_ALERT_STATE;
+        }
+        update_speed_mode_switches(device);
+        indigo_update_property(device, FOCUSER_SPEED_PROPERTY, NULL);
+        return INDIGO_OK;
+    }
+    else if(indigo_property_match_changeable(FOCUSER_STEPS_PROPERTY, property))
+    {
+        indigo_property_copy_values(FOCUSER_STEPS_PROPERTY, property, false);
+        if(FOCUSER_STEPS_ITEM->number.value < FOCUSER_STEPS_ITEM->number.min || 
+            FOCUSER_STEPS_ITEM->number.value > FOCUSER_STEPS_ITEM->number.max)
+        {
+            FOCUSER_STEPS_PROPERTY->state = INDIGO_ALERT_STATE;
+            FOCUSER_POSITION_PROPERTY->state = INDIGO_ALERT_STATE;
+            indigo_update_property(device, FOCUSER_STEPS_PROPERTY, NULL);
+            indigo_update_property(device, FOCUSER_POSITION_PROPERTY, NULL);
+        }
+        else
+        {
+            FOCUSER_STEPS_PROPERTY->state = INDIGO_BUSY_STATE;
+            FOCUSER_POSITION_PROPERTY->state = INDIGO_BUSY_STATE;
+            indigo_update_property(device, FOCUSER_STEPS_PROPERTY, NULL);
+            indigo_update_property(device, FOCUSER_POSITION_PROPERTY, NULL);
+            uint32_t position;
+            if(!grus_get_position(device, &position))
+                DRV_ERROR("grus_get_position(%d) failed", PRIVATE_DATA->handle);
+            else 
+                PRIVATE_DATA->current_position = (double)position;
+
+            if(FOCUSER_DIRECTION_MOVE_INWARD_ITEM->sw.value)
+                PRIVATE_DATA->target_position = PRIVATE_DATA->current_position - FOCUSER_STEPS_ITEM->number.value;
+            else if(FOCUSER_DIRECTION_MOVE_OUTWARD_ITEM->sw.value)
+                PRIVATE_DATA->target_position = PRIVATE_DATA->current_position + FOCUSER_STEPS_ITEM->number.value;
+
+            if(PRIVATE_DATA->target_position < FOCUSER_POSITION_ITEM->number.max)
+                PRIVATE_DATA->target_position = FOCUSER_POSITION_ITEM->number.max;
+            else if(PRIVATE_DATA->target_position > FOCUSER_POSITION_ITEM->number.min)
+                PRIVATE_DATA->target_position = FOCUSER_POSITION_ITEM->number.min;
+            
+            FOCUSER_POSITION_ITEM->number.value = PRIVATE_DATA->current_position;
+            if(!grus_goto_position_comp(device, (uint32_t)PRIVATE_DATA->target_position))
+            {
+                DRV_ERROR("grus_goto_position_comp(%d, %d) failed", PRIVATE_DATA->handle, PRIVATE_DATA->target_position);
+                FOCUSER_STEPS_PROPERTY->state = INDIGO_ALERT_STATE;
+                FOCUSER_POSITION_PROPERTY->state = INDIGO_ALERT_STATE;
+            }
+            indigo_set_timer(device, 0.5, focuser_timer_handler, &PRIVATE_DATA->focuser_timer);
+        }
         return INDIGO_OK;
     }
     else if(indigo_property_match_changeable(FOCUSER_ABORT_MOTION_PROPERTY, property))
     {
+        indigo_property_copy_values(FOCUSER_ABORT_MOTION_PROPERTY, property, false);
+        FOCUSER_STEPS_PROPERTY->state = INDIGO_OK_STATE;
+        FOCUSER_POSITION_PROPERTY->state = INDIGO_OK_STATE;
+        FOCUSER_ABORT_MOTION_PROPERTY->state = INDIGO_OK_STATE;
+        indigo_cancel_timer(device, &PRIVATE_DATA->focuser_timer);
+
+        if(!grus_stop(device))
+        {
+            DRV_ERROR("grus_stop(%d) failed", PRIVATE_DATA->handle);
+            FOCUSER_ABORT_MOTION_PROPERTY->state = INDIGO_ALERT_STATE;
+        }
+
+        uint32_t position;
+        if(!grus_get_position(device, &position))
+        {
+            DRV_ERROR("grus_get_position(%d) failed", PRIVATE_DATA->handle);
+            FOCUSER_ABORT_MOTION_PROPERTY->state = INDIGO_ALERT_STATE;
+        }
+        else
+        {
+            PRIVATE_DATA->current_position = position;
+        }
+
+        FOCUSER_POSITION_ITEM->number.value = PRIVATE_DATA->current_position;
+        FOCUSER_ABORT_MOTION_ITEM->sw.value = false;
+        indigo_update_property(device, FOCUSER_POSITION_PROPERTY, NULL);
+        indigo_update_property(device, FOCUSER_STEPS_PROPERTY, NULL);
+        indigo_update_property(device, FOCUSER_ABORT_MOTION_PROPERTY, NULL);
+
         return INDIGO_OK;
     }
     else if(indigo_property_match_changeable(FOCUSER_COMPENSATION_PROPERTY, property))
     {
+        indigo_property_copy_values(FOCUSER_COMPENSATION_PROPERTY, property, false);
+        FOCUSER_COMPENSATION_PROPERTY->state = INDIGO_OK_STATE;
+        indigo_update_property(device, FOCUSER_COMPENSATION_PROPERTY, NULL);
         return INDIGO_OK;
     }
     else if(indigo_property_match_changeable(FOCUSER_BACKLASH_PROPERTY, property))
@@ -399,9 +722,15 @@ static indigo_result focuser_change_property(indigo_device * device, indigo_clie
     }
     else if(indigo_property_match_changeable(CONFIG_PROPERTY, property))
     {
+        if(indigo_switch_match(CONFIG_SAVE_ITEM, property))
+        {
+            indigo_save_property(device, NULL, FOCUSER_SPEED_PROPERTY);
+            indigo_save_property(device, NULL, X_MOTOR_MODE_PROPERTY);
+            indigo_save_property(device, NULL, X_SETTLE_TIME_PROPERTY);
+        }
         return INDIGO_OK;
     }
-    return INDIGO_OK;
+    return indigo_focuser_change_property(device, client, property);
 }
 
 static indigo_result focuser_detach(indigo_device * device)
