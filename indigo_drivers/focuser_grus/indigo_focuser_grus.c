@@ -28,11 +28,14 @@
 
 #include <indigo/indigo_driver_xml.h>
 #include <indigo/indigo_io.h>
+#include <sys/types.h>
 
 #include "indigo_focuser_grus.h"
 
 #define SERIAL_BAUDRATE "9600"
 #define PRIVATE_DATA    ((grus_private_data *)device->private_data)
+#define PORT_MUTEX      (PRIVATE_DATA->port_mutex)
+#define PORT_MUTEX_T    (&PORT_MUTEX)
 
 #define X_MOTOR_MODE_PROPERTY              (PRIVATE_DATA->motor_mode_property)
 #define X_MOTOR_MODE_IDLE_OFF_ITEM         (X_MOTOR_MODE_PROPERTY->items+0)
@@ -57,6 +60,18 @@ typedef struct
     indigo_property * settle_time_property;
     pthread_mutex_t port_mutex;
 } grus_private_data;
+
+static bool grus_command(indigo_device * device, const char * command, char * response, int max, int sleep)
+{
+    char c;
+    struct timeval tv;
+    pthread_mutex_lock(PORT_MUTEX_T);
+    while(true)
+    {
+        
+    }
+
+}
 
 static void focuser_connection_handler(indigo_device * device)
 {
@@ -152,7 +167,7 @@ static indigo_result focuser_attach(indigo_device * device)
             "Settle time (ms)",
             0, 999, 10, 0);
 
-        pthread_mutex_init(&PRIVATE_DATA->port_mutex, NULL);
+        pthread_mutex_init(PORT_MUTEX_T, NULL);
         INDIGO_DEVICE_ATTACH_LOG(DRIVER_NAME, device->name);
         return indigo_focuser_enumerate_properties(device, NULL, NULL);
     }
