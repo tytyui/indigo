@@ -73,14 +73,17 @@
 #define X_BACKLASH_ENABLE_IN_ITEM           (X_BACKLASH_ENABLE_PROPERTY->items+0)
 #define X_BACKLASH_ENABLE_OUT_ITEM          (X_BACKLASH_ENABLE_PROPERTY->items+1)
 
-#define X_BACKLASH_PROPERTY                 (PRIVATE_DATA->backlash_property)
-#define X_BACKLASH_IN_ITEM                  (X_BACKLASH_PROPERTY->items+0)
-#define X_BACKLASH_OUT_ITEM                 (X_BACKLASH_PROPERTY->items+1)
+#define X_BACKLASH_IN_PROPERTY              (PRIVATE_DATA->backlash_in_property)
+#define X_BACKLASH_OUT_PROPERTY             (PRIVATE_DATA->backlash_out_property)
+
+#define X_BACKLASH_IN_ITEM                  (X_BACKLASH_IN_PROPERTY->items+0)
+#define X_BACKLASH_OUT_ITEM                 (X_BACKLASH_OUT_PROPERTY->items+0)
 
 #define X_BACKLASH_ENABLE_PROPERTY_NAME     "X_BACKLASH_ENABLE"
 #define X_BACKLASH_ENABLE_IN_ITEM_NAME      "BACKLASH_ENABLE_IN"
 #define X_BACKLASH_ENABLE_OUT_ITEM_NAME     "BACKLASH_ENABLE_OUT"
-#define X_BACKLASH_PROPERTY_NAME            "X_BACKLASH_IN"
+#define X_BACKLASH_IN_PROPERTY_NAME         "X_BACKLASH_IN"
+#define X_BACKLASH_OUT_PROPERTY_NAME        "X_BACKLASH_OUT"
 #define X_BACKLASH_IN_ITEM_NAME             "BACKLASH_IN"
 #define X_BACKLASH_OUT_ITEM_NAME            "BACKLASH_OUT"
 
@@ -98,14 +101,15 @@ typedef struct
     indigo_property * motor_mode_property;
     indigo_property * settle_time_property;
     indigo_property * backlash_enable_property;
-    indigo_property * backlash_property;
+    indigo_property * backlash_in_property;
+    indigo_property * backlash_out_property;
     pthread_mutex_t port_mutex;
 } grus_private_data;
 
 typedef enum
 {
-    MOTOR_MODE_IDLE_OFF,
-    MOTOR_MODE_ALWAYS_ON
+    MOTOR_MODE_IDLE_OFF = 0,
+    MOTOR_MODE_ALWAYS_ON = 1
 } motormode_t;
 
 typedef enum
@@ -120,7 +124,7 @@ typedef enum
 typedef enum
 {
     BACKLASH_IN = 1,
-    BACKLASH_OUT =2
+    BACKLASH_OUT = 2
 } backlash_type_t;
 
 #define NO_TEMP_READ (-127)
@@ -272,9 +276,16 @@ static bool grus_get_speed(indigo_device * device, int * speed)
     return grus_command_get_int_value(device, ":Z000000#", 'Z', speed);
 }
 
-static bool grus_get_motor_mode(indigo_device * device, int * motor_mode)
+static bool grus_get_motor_mode(indigo_device * device, int * mode)
 {
-    return grus_command_get_int_value(device, ":F000002#", 'F', motor_mode);    
+    return grus_command_get_int_value(device, ":F000002#", 'F', mode);    
+}
+
+static bool grus_set_motor_mode(indigo_device * device, int mode)
+{
+    char cmd[GRUS_CMD_LEN];
+    snprintf(cmd, GRUS_CMD_LEN, ":F%06d#", mode);
+    return grus_command_valid(device, cmd, 'F');
 }
 
 static bool grus_stop(indigo_device * device)
@@ -427,15 +438,25 @@ static indigo_result focuser_attach(indigo_device * device)
         indigo_init_switch_item(X_BACKLASH_ENABLE_IN_ITEM, X_BACKLASH_ENABLE_IN_ITEM_NAME, "Enable In", false);
         indigo_init_switch_item(X_BACKLASH_ENABLE_OUT_ITEM, X_BACKLASH_ENABLE_OUT_ITEM_NAME, "Enable Out", false);
         
-        X_BACKLASH_PROPERTY = indigo_init_number_property(
+        //IN回差
+        X_BACKLASH_IN_PROPERTY = indigo_init_number_property(
             NULL, device->name,
-            X_BACKLASH_PROPERTY_NAME,
+            X_BACKLASH_IN_PROPERTY_NAME,
             "Advanced", "Internel Backlash In",
             INDIGO_OK_STATE,
-            INDIGO_RW_PERM, 2);
-        if(X_BACKLASH_PROPERTY == NULL)
+            INDIGO_RW_PERM, 1);
+        if(X_BACKLASH_IN_PROPERTY == NULL)
             return INDIGO_FAILED;
         indigo_init_number_item(X_BACKLASH_IN_ITEM, X_BACKLASH_IN_ITEM_NAME, "In Value", 0, 250, 1, 0);
+        //OUT回差
+        X_BACKLASH_OUT_PROPERTY = indigo_init_number_property(
+            NULL, device->name,
+            X_BACKLASH_OUT_PROPERTY_NAME,
+            "Advanced", "Internel Backlash In",
+            INDIGO_OK_STATE,
+            INDIGO_RW_PERM, 1);
+        if(X_BACKLASH_OUT_PROPERTY == NULL)
+            return INDIGO_FAILED;
         indigo_init_number_item(X_BACKLASH_OUT_ITEM, X_BACKLASH_OUT_ITEM_NAME, "Out Value", 0, 250, 1, 0);
         
         //电机通电状态
@@ -464,8 +485,12 @@ static indigo_result focuser_enumerate_properties(indigo_device * device, indigo
     {
         if(indigo_property_match(X_MOTOR_MODE_PROPERTY, property))
             indigo_define_property(device, X_MOTOR_MODE_PROPERTY, NULL);
-        if(indigo_property_match(X_SETTLE_TIME_PROPERTY, property))
-            indigo_define_property(device, X_SETTLE_TIME_PROPERTY, NULL);
+        if(indigo_property_match(X_BACKLASH_ENABLE_PROPERTY, property))
+            indigo_define_property(device, X_BACKLASH_ENABLE_PROPERTY, NULL);
+        if(indigo_property_match(X_BACKLASH_IN_PROPERTY, property))
+            indigo_define_property(device, X_BACKLASH_IN_PROPERTY, NULL);
+        if(indigo_property_match(X_BACKLASH_OUT_PROPERTY, property))
+            indigo_define_property(device, X_BACKLASH_OUT_PROPERTY, NULL);
     }
     return indigo_focuser_enumerate_properties(device, NULL, NULL);
 }
@@ -696,20 +721,57 @@ static indigo_result focuser_change_property(indigo_device * device, indigo_clie
     }
     else if(indigo_property_match_changeable(X_MOTOR_MODE_PROPERTY, property))
     {
+        indigo_property_copy_values(X_MOTOR_MODE_PROPERTY, property, false);
+        X_MOTOR_MODE_PROPERTY->state = INDIGO_OK_STATE;
         return INDIGO_OK;
     }
     else if(indigo_property_match_changeable(FOCUSER_MODE_PROPERTY, property))
     {
+        indigo_property_copy_values(FOCUSER_MODE_PROPERTY, property, false);
+        FOCUSER_MODE_PROPERTY->state = INDIGO_OK_STATE;
+        motormode_t mode = MOTOR_MODE_ALWAYS_ON;
+        if(X_MOTOR_MODE_IDLE_OFF_ITEM->sw.value)
+            mode = MOTOR_MODE_IDLE_OFF;
+        else if(X_MOTOR_MODE_ALWAYS_ON_ITEM->sw.value)
+            mode = MOTOR_MODE_ALWAYS_ON;
+        if(!grus_set_motor_mode(device, mode))
+        {
+            DRV_ERROR("grus_set_motor_mode(%d, %d) failed", PRIVATE_DATA->handle, mode);
+            X_MOTOR_MODE_PROPERTY->state = INDIGO_ALERT_STATE;
+        }
+        update_motor_mode_switches(device);
+        indigo_update_property(device, X_MOTOR_MODE_PROPERTY, NULL);
+        return INDIGO_OK;
+    }
+    else if(indigo_property_match_changeable(X_BACKLASH_ENABLE_PROPERTY, property))
+    {
+        //TODO
+        indigo_property_copy_values(X_BACKLASH_ENABLE_PROPERTY, property, false);
+        X_BACKLASH_ENABLE_PROPERTY->state = INDIGO_OK_STATE;
+        return INDIGO_OK;
+    }
+    else if(indigo_property_match_changeable(X_BACKLASH_IN_PROPERTY, property))
+    {
+        //TODO
+        indigo_property_copy_values(X_BACKLASH_IN_PROPERTY, property, false);
+        X_BACKLASH_IN_PROPERTY->state = INDIGO_OK_STATE;
+        return INDIGO_OK;
+    }
+    else if(indigo_property_match_changeable(X_BACKLASH_OUT_PROPERTY, property))
+    {
+        //TODO
+        indigo_property_copy_values(X_BACKLASH_OUT_PROPERTY, property, false);
+        X_BACKLASH_OUT_PROPERTY->state = INDIGO_OK_STATE;
         return INDIGO_OK;
     }
     else if(indigo_property_match_changeable(CONFIG_PROPERTY, property))
     {
         if(indigo_switch_match(CONFIG_SAVE_ITEM, property))
         {
-            indigo_save_property(device, NULL, FOCUSER_SPEED_PROPERTY);
             indigo_save_property(device, NULL, X_MOTOR_MODE_PROPERTY);
             indigo_save_property(device, NULL, X_BACKLASH_ENABLE_PROPERTY);
-            indigo_save_property(device, NULL, X_BACKLASH_PROPERTY);
+            indigo_save_property(device, NULL, X_BACKLASH_IN_PROPERTY);
+            indigo_save_property(device, NULL, X_BACKLASH_OUT_PROPERTY);
         }
         return INDIGO_OK;
     }
@@ -725,7 +787,9 @@ static indigo_result focuser_detach(indigo_device * device)
         focuser_connection_handler(device);
     }
     indigo_release_property(X_MOTOR_MODE_PROPERTY);
-    indigo_release_property(X_SETTLE_TIME_PROPERTY);
+    indigo_release_property(X_BACKLASH_ENABLE_PROPERTY);
+    indigo_release_property(X_BACKLASH_IN_PROPERTY);
+    indigo_release_property(X_BACKLASH_OUT_PROPERTY);
     pthread_mutex_destroy(&PRIVATE_DATA->port_mutex);
     indigo_global_unlock(device);
     INDIGO_DEVICE_DETACH_LOG(DRIVER_NAME, device->name);
