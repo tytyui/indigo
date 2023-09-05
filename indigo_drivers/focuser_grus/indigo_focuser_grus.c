@@ -57,12 +57,6 @@
 #define X_MOTOR_MODE_IDLE_OFF_ITEM_NAME     "OFF_WHEN_IDLE"
 #define X_MOTOR_MODE_ALWAYS_ON_ITEM_NAME    "ALWAYS_ON"
 
-#define X_SETTLE_TIME_PROPERTY              (PRIVATE_DATA->settle_time_property)
-#define X_SETTLE_TIME_ITEM                  (X_SETTLE_TIME_PROPERTY->items+0)
-
-#define X_SETTLE_TIME_PROPERTY_NAME         "X_SETTLE_TIME"
-#define X_SETTLE_TIME_ITEM_NAME             "SETTLE_TIME"
-
 #define X_SPEED_MODE_1_ITEM                 (FOCUSER_SPEED_PROPERTY->items+0)
 #define X_SPEED_MODE_2_ITEM                 (FOCUSER_SPEED_PROPERTY->items+1)
 #define X_SPEED_MODE_4_ITEM                 (FOCUSER_SPEED_PROPERTY->items+2)
@@ -458,17 +452,6 @@ static indigo_result focuser_attach(indigo_device * device)
         indigo_init_switch_item(X_MOTOR_MODE_IDLE_OFF_ITEM, X_MOTOR_MODE_IDLE_OFF_ITEM_NAME, "OFF When Idle", false);
         indigo_init_switch_item(X_MOTOR_MODE_ALWAYS_ON_ITEM, X_MOTOR_MODE_ALWAYS_ON_ITEM_NAME, "Always ON", false);
         
-        //等待时间
-        X_SETTLE_TIME_PROPERTY = indigo_init_number_property(
-            NULL, device->name,
-            X_SETTLE_TIME_PROPERTY_NAME,
-            "Advanced", "Settle Time",
-            INDIGO_OK_STATE,
-            INDIGO_RW_PERM, 1);
-        if(X_SETTLE_TIME_PROPERTY == NULL)
-            return INDIGO_FAILED;
-        indigo_init_number_item(X_SETTLE_TIME_ITEM, X_SETTLE_TIME_ITEM_NAME, "Settle time (ms)", 0, 999, 10, 0);
-
         pthread_mutex_init(PORT_MUTEX_T, NULL);
         INDIGO_DEVICE_ATTACH_LOG(DRIVER_NAME, device->name);
         return indigo_focuser_enumerate_properties(device, NULL, NULL);
@@ -706,10 +689,9 @@ static indigo_result focuser_change_property(indigo_device * device, indigo_clie
     }
     else if(indigo_property_match_changeable(FOCUSER_BACKLASH_PROPERTY, property))
     {
-        return INDIGO_OK;
-    }
-    else if(indigo_property_match_changeable(X_SETTLE_TIME_PROPERTY, property))
-    {
+        indigo_property_copy_values(FOCUSER_BACKLASH_PROPERTY, property, false);
+        FOCUSER_BACKLASH_PROPERTY->state = INDIGO_OK_STATE;
+        indigo_update_property(device, FOCUSER_BACKLASH_PROPERTY, NULL);
         return INDIGO_OK;
     }
     else if(indigo_property_match_changeable(X_MOTOR_MODE_PROPERTY, property))
@@ -726,7 +708,8 @@ static indigo_result focuser_change_property(indigo_device * device, indigo_clie
         {
             indigo_save_property(device, NULL, FOCUSER_SPEED_PROPERTY);
             indigo_save_property(device, NULL, X_MOTOR_MODE_PROPERTY);
-            indigo_save_property(device, NULL, X_SETTLE_TIME_PROPERTY);
+            indigo_save_property(device, NULL, X_BACKLASH_ENABLE_PROPERTY);
+            indigo_save_property(device, NULL, X_BACKLASH_PROPERTY);
         }
         return INDIGO_OK;
     }
