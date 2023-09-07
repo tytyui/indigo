@@ -91,11 +91,20 @@
 
 typedef struct
 {
+    uint32_t in_value;
+    uint32_t out_value;
+    bool in_enable;
+    bool out_enable;
+} backlash_data;
+
+typedef struct
+{
     int handle;
     uint32_t current_position;
     uint32_t target_position;
     uint32_t max_position;
     bool poitive_last_move;
+    backlash_data backlash;
     indigo_timer * focuser_timer;
     indigo_timer * temperature_timer;
     indigo_property * motor_mode_property;
@@ -123,8 +132,8 @@ typedef enum
 
 typedef enum
 {
-    BACKLASH_IN = 1,
-    BACKLASH_OUT = 2
+    BL_TYPE_IN = 1,
+    BL_TYPE_OUT = 2
 } backlash_type_t;
 
 #define NO_TEMP_READ (-127)
@@ -292,6 +301,37 @@ static bool grus_stop(indigo_device * device)
 {
     return GRUS_COMMAND(device, ":Q000000#");
 }
+
+static bool grus_clear_backlash(indigo_device * device, int type)
+{
+    char cmd[GRUS_CMD_LEN];
+    snprintf(cmd, GRUS_CMD_LEN, ":B1%01d0000#", type);
+    return grus_command_valid(device, cmd, 'B');
+}
+
+static bool grus_set_backlash(indigo_device * device, int type, int value)
+{
+    char cmd[GRUS_CMD_LEN];
+    snprintf(cmd, GRUS_CMD_LEN, ":B1%01d1%03d", type, value);
+    return grus_command_valid(device, cmd, 'B');
+}
+
+static bool grus_get_basklash(indigo_device * device, backlash_data * data)
+{
+    if(data == NULL)
+        return false;
+    char response[GRUS_CMD_LEN + GRUS_CMD_LEN];
+    bool result = grus_command(device, ":B000000#", response, GRUS_CMD_LEN + GRUS_CMD_LEN, 200);
+    if(!result)
+        return false;
+    int parsed = sscanf(response, ":B01%01d%03d#:B02%01d%03d#", 
+        &data->in_enable, &data->in_value, 
+        &data->out_enable, &data->out_value);
+    if(parsed != 4)
+        return false;
+    return true;
+}
+
 //TODO
 static void focuser_connection_handler(indigo_device * device)
 {
@@ -723,12 +763,6 @@ static indigo_result focuser_change_property(indigo_device * device, indigo_clie
     {
         indigo_property_copy_values(X_MOTOR_MODE_PROPERTY, property, false);
         X_MOTOR_MODE_PROPERTY->state = INDIGO_OK_STATE;
-        return INDIGO_OK;
-    }
-    else if(indigo_property_match_changeable(FOCUSER_MODE_PROPERTY, property))
-    {
-        indigo_property_copy_values(FOCUSER_MODE_PROPERTY, property, false);
-        FOCUSER_MODE_PROPERTY->state = INDIGO_OK_STATE;
         motormode_t mode = MOTOR_MODE_ALWAYS_ON;
         if(X_MOTOR_MODE_IDLE_OFF_ITEM->sw.value)
             mode = MOTOR_MODE_IDLE_OFF;
@@ -741,13 +775,88 @@ static indigo_result focuser_change_property(indigo_device * device, indigo_clie
         }
         update_motor_mode_switches(device);
         indigo_update_property(device, X_MOTOR_MODE_PROPERTY, NULL);
+
+        return INDIGO_OK;
+    }
+    else if(indigo_property_match_changeable(FOCUSER_MODE_PROPERTY, property))
+    {
+        indigo_property_copy_values(FOCUSER_MODE_PROPERTY, property, false);
+        FOCUSER_MODE_PROPERTY->state = INDIGO_OK_STATE;
+        if(FOCUSER_MODE_MANUAL_ITEM->sw.value)
+        {
+            indigo_define_property(device, FOCUSER_ON_POSITION_SET_PROPERTY, NULL);
+            indigo_define_property(device, FOCUSER_SPEED_PROPERTY, NULL);
+            indigo_define_property(device, FOCUSER_REVERSE_MOTION_PROPERTY, NULL);
+            indigo_define_property(device, FOCUSER_DIRECTION_PROPERTY, NULL);
+            indigo_define_property(device, FOCUSER_STEPS_PROPERTY, NULL);
+            indigo_define_property(device, FOCUSER_ABORT_MOTION_PROPERTY, NULL);
+            indigo_define_property(device, FOCUSER_BACKLASH_PROPERTY, NULL);
+            indigo_delete_property(device, FOCUSER_POSITION_PROPERTY, NULL);
+            FOCUSER_POSITION_PROPERTY->perm = INDIGO_RW_PERM;
+            indigo_define_property(device, FOCUSER_POSITION_ITEM, NULL);
+        }
+        else
+        {
+            indigo_delete_property(device, FOCUSER_ON_POSITION_SET_PROPERTY, NULL);
+            indigo_delete_property(device, FOCUSER_SPEED_PROPERTY, NULL);
+            indigo_delete_property(device, FOCUSER_REVERSE_MOTION_PROPERTY, NULL);
+            indigo_delete_property(device, FOCUSER_DIRECTION_PROPERTY, NULL);
+            indigo_delete_property(device, FOCUSER_STEPS_PROPERTY, NULL);
+            indigo_delete_property(device, FOCUSER_ABORT_MOTION_PROPERTY, NULL);
+            indigo_delete_property(device, FOCUSER_BACKLASH_PROPERTY, NULL);
+            indigo_delete_property(device, FOCUSER_POSITION_PROPERTY, NULL);
+            FOCUSER_POSITION_PROPERTY->perm = INDIGO_RO_PERM;
+            indigo_define_property(device, FOCUSER_POSITION_ITEM, NULL);
+        }
+        FOCUSER_MODE_PROPERTY->state = INDIGO_OK_STATE;
+        indigo_update_property(device, FOCUSER_MODE_PROPERTY, NULL);
         return INDIGO_OK;
     }
     else if(indigo_property_match_changeable(X_BACKLASH_ENABLE_PROPERTY, property))
     {
-        //TODO
         indigo_property_copy_values(X_BACKLASH_ENABLE_PROPERTY, property, false);
         X_BACKLASH_ENABLE_PROPERTY->state = INDIGO_OK_STATE;
+        if(X_BACKLASH_ENABLE_IN_ITEM->sw.value)
+        {
+            if(!grus_get_basklash(device, &PRIVATE_DATA->backlash))
+            {
+                DRV_ERROR("grus_get_basklash(%d) failed", PRIVATE_DATA->handle);
+                X_BACKLASH_ENABLE_PROPERTY->state = INDIGO_ALERT_STATE;
+            }
+            indigo_define_property(device, X_BACKLASH_IN_PROPERTY, NULL);
+            X_BACKLASH_IN_ITEM->number.value = PRIVATE_DATA->backlash.in_value;
+            indigo_update_property(device, X_BACKLASH_IN_PROPERTY, NULL);
+        }
+        else
+        {
+            if(!grus_clear_backlash(device, BL_TYPE_IN))
+            {
+                DRV_ERROR("grus_clear_backlash(%d, %d) failed", PRIVATE_DATA->handle, BL_TYPE_IN);
+                X_BACKLASH_ENABLE_PROPERTY->state = INDIGO_ALERT_STATE;
+            }
+            indigo_delete_property(device, X_BACKLASH_IN_PROPERTY, NULL);
+        }
+        if(X_BACKLASH_ENABLE_OUT_ITEM->sw.value)
+        {
+            if(!grus_get_backlash(device,  &PRIVATE_DATA->backlash))
+            {
+                DRV_ERROR("grus_get_backlash(%d) failed", PRIVATE_DATA->handle);
+                X_BACKLASH_ENABLE_PROPERTY->state = INDIGO_ALERT_STATE;
+            }
+            indigo_define_property(device, X_BACKLASH_OUT_PROPERTY, NULL);
+            X_BACKLASH_IN_ITEM->number.value = PRIVATE_DATA->backlash.out_value;
+            indigo_update_property(device, X_BACKLASH_OUT_PROPERTY, NULL);
+        }
+        else
+        {
+            if(!grus_clear_backlash(device, BL_TYPE_OUT))
+            {
+                DRV_ERROR("grus_clear_backlash(%d, %d) failed", PRIVATE_DATA->handle, BL_TYPE_OUT);
+                X_BACKLASH_ENABLE_PROPERTY->state = INDIGO_ALERT_STATE;
+            }
+            indigo_delete_property(device, X_BACKLASH_OUT_PROPERTY, NULL);
+        }
+        indigo_update_property(device, X_BACKLASH_ENABLE_PROPERTY, NULL);
         return INDIGO_OK;
     }
     else if(indigo_property_match_changeable(X_BACKLASH_IN_PROPERTY, property))
@@ -755,6 +864,7 @@ static indigo_result focuser_change_property(indigo_device * device, indigo_clie
         //TODO
         indigo_property_copy_values(X_BACKLASH_IN_PROPERTY, property, false);
         X_BACKLASH_IN_PROPERTY->state = INDIGO_OK_STATE;
+        indigo_update_property(device, X_BACKLASH_IN_PROPERTY, NULL);
         return INDIGO_OK;
     }
     else if(indigo_property_match_changeable(X_BACKLASH_OUT_PROPERTY, property))
