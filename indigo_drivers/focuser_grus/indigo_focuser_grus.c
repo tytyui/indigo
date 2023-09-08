@@ -316,7 +316,7 @@ static bool grus_set_backlash(indigo_device * device, int type, int value)
     return grus_command_valid(device, cmd, 'B');
 }
 
-static bool grus_get_basklash(indigo_device * device, backlash_data * data)
+static bool grus_get_backlash(indigo_device * device, backlash_data * data)
 {
     if(data == NULL)
         return false;
@@ -341,7 +341,7 @@ static void focuser_connection_handler(indigo_device * device)
 //TODO
 static void focuser_timer_handler(indigo_device * device)
 {
-
+    
 }
 
 static void update_speed_mode_switches(indigo_device * device)
@@ -861,17 +861,38 @@ static indigo_result focuser_change_property(indigo_device * device, indigo_clie
     }
     else if(indigo_property_match_changeable(X_BACKLASH_IN_PROPERTY, property))
     {
-        //TODO
         indigo_property_copy_values(X_BACKLASH_IN_PROPERTY, property, false);
         X_BACKLASH_IN_PROPERTY->state = INDIGO_OK_STATE;
+        if(!grus_get_backlash(device, &PRIVATE_DATA->backlash))
+        {
+            DRV_ERROR("grus_get_backlash(%d) failed", PRIVATE_DATA->handle);
+            X_BACKLASH_IN_PROPERTY->state = INDIGO_ALERT_STATE;
+        }
+        X_BACKLASH_IN_ITEM->number.value = PRIVATE_DATA->backlash.in_value;
+        if(!grus_set_backlash(device, BL_TYPE_IN, PRIVATE_DATA->backlash.in_value))
+        {
+            DRV_ERROR("grus_set_backlash(%d, %d, %d) failed", PRIVATE_DATA->handle, BL_TYPE_IN, PRIVATE_DATA->backlash.in_value);
+            X_BACKLASH_IN_PROPERTY->state = INDIGO_ALERT_STATE;
+        }
         indigo_update_property(device, X_BACKLASH_IN_PROPERTY, NULL);
         return INDIGO_OK;
     }
     else if(indigo_property_match_changeable(X_BACKLASH_OUT_PROPERTY, property))
     {
-        //TODO
         indigo_property_copy_values(X_BACKLASH_OUT_PROPERTY, property, false);
         X_BACKLASH_OUT_PROPERTY->state = INDIGO_OK_STATE;
+        if(!grus_get_backlash(device, &PRIVATE_DATA->backlash))
+        {
+            DRV_ERROR("grus_get_backlash(%d) failed", PRIVATE_DATA->handle);
+            X_BACKLASH_OUT_PROPERTY->state = INDIGO_ALERT_STATE;
+        }
+        X_BACKLASH_OUT_ITEM->number.value = PRIVATE_DATA->backlash.out_value;
+        if(!grus_set_backlash(device, X_BACKLASH_OUT_PROPERTY, NULL))
+        {
+            DRV_ERROR("grus_set_backlash(%d, %d, %d) failed", PRIVATE_DATA->handle, BL_TYPE_OUT, PRIVATE_DATA->backlash.out_value);
+            X_BACKLASH_OUT_PROPERTY->state = INDIGO_ALERT_STATE;
+        }
+        indigo_update_property(device, X_BACKLASH_OUT_PROPERTY, NULL);
         return INDIGO_OK;
     }
     else if(indigo_property_match_changeable(CONFIG_PROPERTY, property))
