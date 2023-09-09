@@ -41,8 +41,8 @@
 
 #define PORT_MUTEX                          (PRIVATE_DATA->port_mutex)
 #define PORT_MUTEX_T                        (&PORT_MUTEX)
-#define MUTEX_LOCK()                        pthread_mutex_lock(PORT_MUTEX_T)
-#define MUTEX_UNLOCK()                      pthread_mutex_unlock(PORT_MUTEX_T);
+#define LOCK_MUTEX()                        pthread_mutex_lock(PORT_MUTEX_T)
+#define UNLOCK_MUTEX()                      pthread_mutex_unlock(PORT_MUTEX_T);
 
 #define DRV_DEBUG(fmt, ...)                 INDIGO_DRIVER_DEBUG(DRIVER_NAME, fmt, ##__VA_ARGS__)
 #define DRV_ERROR(fmt, ...)                 INDIGO_DRIVER_ERROR(DRIVER_NAME, fmt, ##__VA_ARGS__)
@@ -142,7 +142,7 @@ static bool grus_command(indigo_device * device, const char * command, char * re
 {
     char c;
     struct timeval tv;
-    MUTEX_LOCK();
+    LOCK_MUTEX();
     while(true)
     {
         fd_set readout;
@@ -155,13 +155,13 @@ static bool grus_command(indigo_device * device, const char * command, char * re
             break;
         if(result < 0)
         {
-            MUTEX_UNLOCK();
+            UNLOCK_MUTEX();
             return false;
         }
         result = read(PRIVATE_DATA->handle, &c, 1);
         if(result < 1)
         {
-            MUTEX_UNLOCK();
+            UNLOCK_MUTEX();
             return false;
         }
     }
@@ -186,7 +186,7 @@ static bool grus_command(indigo_device * device, const char * command, char * re
             result = read(PRIVATE_DATA->handle, &c, 1);
             if(result < 1)
             {
-                MUTEX_UNLOCK();
+                UNLOCK_MUTEX();
                 DRV_ERROR("Failed to read from %s -> %s (%d)", DEVICE_PORT_ITEM->text.value, strerror(errno), errno);
                 return false;
             }
@@ -196,7 +196,7 @@ static bool grus_command(indigo_device * device, const char * command, char * re
         }
         response[index] = 0;
     }
-    MUTEX_UNLOCK();
+    UNLOCK_MUTEX();
     DRV_DEBUG("Command %s -> %s", command, response != NULL ? response : "NULL");
     return true;
 }
@@ -259,6 +259,11 @@ static bool grus_sync_position(indigo_device * device, uint32_t position)
 static bool grus_get_position(indigo_device * device, uint32_t * position)
 {
     return grus_command_get_int_value(device, ":S000000#", 'D', position);
+}
+
+static bool grus_is_moving(indigo_device * device, bool * is_moving)
+{
+    return grus_command_get_int_value(device, ":W000000#", 'W', is_moving);
 }
 
 static bool grus_set_max_position(indigo_device * device, int position)
@@ -335,13 +340,81 @@ static bool grus_get_backlash(indigo_device * device, backlash_data * data)
 //TODO
 static void focuser_connection_handler(indigo_device * device)
 {
+    uint32_t position;
+    if(CONNECTION_CONNECTED_ITEM->sw.value)
+    {
+        if(!device->gp_bits)
+        {
+            LOCK_MUTEX();
+            if(indigo_try_global_lock(device) != INDIGO_OK)
+            {
+                UNLOCK_MUTEX();
+                DRV_ERROR("indigo_try_global_lock(): failed to get lock.");
+                CONNECTION_PROPERTY->state = INDIGO_ALERT_STATE;
+                indigo_set_switch(CONNECTION_PROPERTY, CONNECTION_DISCONNECTED_ITEM, true);
+                indigo_update_property(device, CONNECTION_PROPERTY, NULL);
+            }
+            else
+            {
+                UNLOCK_MUTEX();
+                char * name = DEVICE_PORT_ITEM->text.value;
+                if(!indigo_is_device_url(name, "grus"))
+                {
+                    PRIVATE_DATA->handle = indigo_open_serial_with_speed(name, atoi(DEVICE_BAUDRATE_ITEM->text.value));
+                    sleep(1);
+                }
+                else
+                {
+                    indigo_network_protocol proto = INDIGO_PROTOCOL_TCP;
+                    PRIVATE_DATA->handle = indigo_open_network_device(name, 8080, &proto);
+                    
+                }
+            }
+        }
+    }
+    else
+    {
 
+    }
+    indigo_focuser_change_property(device, NULL, CONNECTION_PROPERTY);
 }
 
-//TODO
 static void focuser_timer_handler(indigo_device * device)
 {
-    
+    bool is_moving;
+    uint32_t position;
+
+    if(!grus_is_moving(device, &is_moving))
+    {
+        DRV_ERROR("grus_is_moving(%d) failed", PRIVATE_DATA->handle);
+        FOCUSER_POSITION_PROPERTY->state = INDIGO_ALERT_STATE;
+        FOCUSER_STEPS_PROPERTY->state = INDIGO_ALERT_STATE;
+    }
+
+    if(!grus_get_position(device, &position))
+    {
+        DRV_ERROR("grus_get_position(%d) failed", PRIVATE_DATA->handle);
+        FOCUSER_POSITION_PROPERTY->state = INDIGO_ALERT_STATE;
+        FOCUSER_STEPS_PROPERTY->state = INDIGO_ALERT_STATE;
+    }
+    else
+    {
+        PRIVATE_DATA->current_position = (double)position;
+    }
+
+    FOCUSER_POSITION_ITEM->number.value = PRIVATE_DATA->current_position;
+    if(!is_moving || PRIVATE_DATA->current_position == PRIVATE_DATA->target_position)
+    {
+        FOCUSER_POSITION_PROPERTY->state = INDIGO_OK_STATE;
+        FOCUSER_STEPS_PROPERTY->state = INDIGO_OK_STATE;
+    }
+    else
+    {
+        indigo_reschedule_timer(device, 0.5, &PRIVATE_DATA->focuser_timer);
+    }
+
+    indigo_update_property(device, FOCUSER_STEPS_PROPERTY, NULL);
+    indigo_update_property(device, FOCUSER_POSITION_PROPERTY, NULL);
 }
 
 static void update_speed_mode_switches(indigo_device * device)
