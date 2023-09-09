@@ -367,7 +367,33 @@ static void focuser_connection_handler(indigo_device * device)
                 {
                     indigo_network_protocol proto = INDIGO_PROTOCOL_TCP;
                     PRIVATE_DATA->handle = indigo_open_network_device(name, 8080, &proto);
-                    
+                }
+                if(PRIVATE_DATA->handle < 0)
+                {
+                    DRV_ERROR("Opening device %s: failed", DEVICE_PORT_ITEM->text.value);
+                    CONNECTION_PROPERTY->state = INDIGO_ALERT_STATE;
+                    indigo_set_switch(CONNECTION_PROPERTY, CONNECTION_DISCONNECTED_ITEM, true);
+                    indigo_update_property(device, CONNECTION_PROPERTY, NULL);
+                    indigo_global_unlock(device);
+                    return;
+                }
+                else if(!grus_get_position(device, &position))
+                {
+                    int res = close(PRIVATE_DATA->handle);
+                    if(res < 0)
+                        DRV_ERROR("close(%d) = %d", PRIVATE_DATA->handle, res);
+                    else
+                        DRV_DEBUG("close(%d) = %d", PRIVATE_DATA->handle, res);
+                    indigo_global_unlock(device);
+                    device->gp_bits = false;
+                    DRV_ERROR("connect failed, GrusFocuser AF dis not respond");
+                    CONNECTION_PROPERTY->state = INDIGO_ALERT_STATE;
+                    indigo_set_switch(CONNECTION_PROPERTY, CONNECTION_DISCONNECTED_ITEM, true);
+                    indigo_update_property(device, CONNECTION_PROPERTY, NULL);
+                }
+                else
+                {
+
                 }
             }
         }
