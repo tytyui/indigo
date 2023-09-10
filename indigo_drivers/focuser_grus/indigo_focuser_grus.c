@@ -457,6 +457,8 @@ static void focuser_timer_handler(indigo_device * device)
         FOCUSER_POSITION_PROPERTY->state = INDIGO_ALERT_STATE;
         FOCUSER_STEPS_PROPERTY->state = INDIGO_ALERT_STATE;
     }
+    else
+        DRV_DEBUG("grus_is_moving(%d, %d) success", PRIVATE_DATA->handle, is_moving);
 
     if(!grus_get_position(device, &position))
     {
