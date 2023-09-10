@@ -186,7 +186,10 @@ static bool grus_command(indigo_device * device, const char * command, char * re
             timeout = 0;
             long result = select(PRIVATE_DATA->handle+1, &readout, NULL, NULL, &tv);
             if(result <= 0)
+            {
+                DRV_ERROR("bad result: %d", result);
                 break;
+            }
             result = read(PRIVATE_DATA->handle, &c, 1);
             if(result < 1)
             {
