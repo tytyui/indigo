@@ -228,11 +228,13 @@ static bool grus_command_valid(indigo_device * device, const char * command, cha
 static bool grus_get_temperature(indigo_device * device, double * temperature)
 {
     char response[GRUS_CMD_LEN] = {0};
+    uint32_t temp;
     if(grus_command(device, ":T000000#", response, GRUS_CMD_LEN, 200))
     {
-        int parsed = sscanf(response, ":T%lf#", temperature);
+        int parsed = sscanf(response, ":T%06d#", &temp);
         if(parsed != 1) return false;
-        DRV_DEBUG(":T000000# -> %s = %lf", response, *temperature);
+        DRV_DEBUG(":T000000# -> %s = %lf", response, temp);
+        *temperature = temp / 100.0;
         return true;
     }
     DRV_ERROR("No response");
