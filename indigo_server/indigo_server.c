@@ -141,6 +141,7 @@
 #include "focuser_robofocus/indigo_focuser_robofocus.h"
 #include "wheel_qhy/indigo_wheel_qhy.h"
 #include "focuser_mypro2/indigo_focuser_mypro2.h"
+#include "focuser_grus/indigo_focuser_grus.h"
 #include "agent_astrometry/indigo_agent_astrometry.h"
 #include "dome_skyroof/indigo_dome_skyroof.h"
 #include "aux_skyalert/indigo_aux_skyalert.h"
@@ -277,6 +278,7 @@ driver_entry_point static_drivers[] = {
 #endif
 	indigo_focuser_moonlite,
 	indigo_focuser_mypro2,
+	indigo_focuser_grus,
 	indigo_focuser_nfocus,
 	indigo_focuser_nstep,
 	indigo_focuser_optec,
