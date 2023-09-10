@@ -745,18 +745,18 @@ static indigo_result focuser_attach(indigo_device * device)
 
         INFO_PROPERTY->count = 6;
         strcpy(INFO_DEVICE_MODEL_ITEM->text.value, FOCUSER_GRUS_NAME);
-        //最小位置
+        //最大位置
         FOCUSER_LIMITS_PROPERTY->hidden = false;
         FOCUSER_LIMITS_MAX_POSITION_ITEM->number.min = 1;
         FOCUSER_LIMITS_MAX_POSITION_ITEM->number.max = 0xFFFF;
         FOCUSER_LIMITS_MAX_POSITION_ITEM->number.step = 1;
-        FOCUSER_LIMITS_MAX_POSITION_ITEM->number.value = 1;
+        FOCUSER_LIMITS_MAX_POSITION_ITEM->number.value = 0xFFFF;
         FOCUSER_LIMITS_MAX_POSITION_ITEM->number.target = 1;
-        //最大位置
+        //最小位置
         FOCUSER_LIMITS_MIN_POSITION_ITEM->number.min = 1;
         FOCUSER_LIMITS_MIN_POSITION_ITEM->number.max = 0xFFFF;
         FOCUSER_LIMITS_MIN_POSITION_ITEM->number.step = 1;
-        FOCUSER_LIMITS_MIN_POSITION_ITEM->number.value = 0xFFFF;
+        FOCUSER_LIMITS_MIN_POSITION_ITEM->number.value = 1;
         FOCUSER_LIMITS_MIN_POSITION_ITEM->number.target = 0xFFFF;
         //位置
         FOCUSER_POSITION_ITEM->number.min = FOCUSER_LIMITS_MIN_POSITION_ITEM->number.value;
@@ -813,7 +813,7 @@ static indigo_result focuser_attach(indigo_device * device)
         X_BACKLASH_IN_PROPERTY = indigo_init_number_property(
             NULL, device->name,
             X_BACKLASH_IN_PROPERTY_NAME,
-            "Advanced", "Internel Backlash In",
+            "Advance", "Internel Backlash In",
             INDIGO_OK_STATE,
             INDIGO_RW_PERM, 1);
         if(X_BACKLASH_IN_PROPERTY == NULL)
@@ -823,7 +823,7 @@ static indigo_result focuser_attach(indigo_device * device)
         X_BACKLASH_OUT_PROPERTY = indigo_init_number_property(
             NULL, device->name,
             X_BACKLASH_OUT_PROPERTY_NAME,
-            "Advanced", "Internel Backlash In",
+            "Advance", "Internel Backlash In",
             INDIGO_OK_STATE,
             INDIGO_RW_PERM, 1);
         if(X_BACKLASH_OUT_PROPERTY == NULL)
@@ -834,7 +834,7 @@ static indigo_result focuser_attach(indigo_device * device)
         X_MOTOR_MODE_PROPERTY = indigo_init_switch_property(
             NULL, device->name, 
             X_MOTOR_MODE_PROPERTY_NAME, 
-            "Advanced", "Motor Power", 
+            "Advance", "Motor Power", 
             INDIGO_OK_STATE,
             INDIGO_RW_PERM,
             INDIGO_ONE_OF_MANY_RULE, 2);
