@@ -138,6 +138,8 @@ typedef enum
 } backlash_type_t;
 
 #define NO_TEMP_READ (-127)
+// gp_bits is used as boolean
+#define is_connected                    gp_bits
 
 static bool grus_command(indigo_device * device, const char * command, char * response, int max, int sleep)
 {
@@ -585,7 +587,7 @@ static void focuser_connection_handler(indigo_device * device)
     uint32_t position;
     if(CONNECTION_CONNECTED_ITEM->sw.value)
     {
-        if(!device->gp_bits)
+        if(!device->is_connected)
         {
             LOCK_MUTEX();
             if(indigo_try_global_lock(device) != INDIGO_OK)
@@ -627,7 +629,7 @@ static void focuser_connection_handler(indigo_device * device)
                     else
                         DRV_DEBUG("close(%d) = %d", PRIVATE_DATA->handle, res);
                     indigo_global_unlock(device);
-                    device->gp_bits = false;
+                    device->is_connected = false;
                     DRV_ERROR("connect failed, GrusFocuser AF dis not respond");
                     CONNECTION_PROPERTY->state = INDIGO_ALERT_STATE;
                     indigo_set_switch(CONNECTION_PROPERTY, CONNECTION_DISCONNECTED_ITEM, true);
@@ -678,7 +680,7 @@ static void focuser_connection_handler(indigo_device * device)
                     indigo_define_property(device, X_MOTOR_MODE_PROPERTY, NULL);
 
                     CONNECTION_PROPERTY->state = INDIGO_OK_STATE;
-                    device->gp_bits = true;
+                    device->is_connected = true;
 
                     indigo_set_timer(device, 0.5, focuser_timer_handler, &PRIVATE_DATA->focuser_timer);
 
@@ -696,7 +698,7 @@ static void focuser_connection_handler(indigo_device * device)
     }
     else
     {
-        if(device->gp_bits)
+        if(device->is_connected)
         {
             indigo_cancel_timer_sync(device, &PRIVATE_DATA->focuser_timer);
             indigo_cancel_timer_sync(device, &PRIVATE_DATA->temperature_timer);
@@ -717,7 +719,7 @@ static void focuser_connection_handler(indigo_device * device)
                 DRV_DEBUG("close(%d) = %d", PRIVATE_DATA->handle, res);
             indigo_global_unlock(device);
             UNLOCK_MUTEX();
-            device->gp_bits = false;
+            device->is_connected = false;
             CONNECTION_PROPERTY->state = INDIGO_OK_STATE;
         }
     }
