@@ -192,8 +192,6 @@ static bool grus_command(indigo_device * device, const char * command, char * re
                 return false;
             }
             response[index++] = c;
-            if(c == '#')
-                break;
         }
         response[index] = 0;
     }
@@ -303,7 +301,7 @@ static bool grus_set_max_position(indigo_device * device, int position)
 
 static bool grus_get_max_position(indigo_device * device, int * position)
 {
-    return grus_command_get_int_value(device, ":L000000", 'L', position);
+    return grus_command_get_int_value(device, ":L000000#", 'L', position);
 }
 
 static bool grus_set_speed(indigo_device * device, int speed)
