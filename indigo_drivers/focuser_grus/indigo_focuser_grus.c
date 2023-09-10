@@ -38,7 +38,7 @@
 
 #define SERIAL_BAUDRATE "9600"
 #define PRIVATE_DATA    ((grus_private_data *)device->private_data)
-#define GRUS_CMD_LEN    9
+#define GRUS_CMD_LEN    10
 
 #define PORT_MUTEX                          (PRIVATE_DATA->port_mutex)
 #define PORT_MUTEX_T                        (&PORT_MUTEX)
