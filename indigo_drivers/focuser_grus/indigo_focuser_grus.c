@@ -28,6 +28,7 @@
 
 #include <unistd.h>
 #include <errno.h>
+#include <math.h>
 #include <sys/time.h>
 
 #include <indigo/indigo_driver_xml.h>
@@ -103,12 +104,12 @@ typedef struct
     uint32_t current_position;
     uint32_t target_position;
     uint32_t max_position;
+    double prev_temp;
     bool poitive_last_move;
     backlash_data backlash;
     indigo_timer * focuser_timer;
     indigo_timer * temperature_timer;
     indigo_property * motor_mode_property;
-    indigo_property * settle_time_property;
     indigo_property * backlash_enable_property;
     indigo_property * backlash_in_property;
     indigo_property * backlash_out_property;
@@ -224,11 +225,33 @@ static bool grus_command_valid(indigo_device * device, const char * command, cha
     return grus_command_get_int_value(device, command, expect, &value);
 }
 
+static bool grus_get_temperature(indigo_device * device, double * temperature)
+{
+    char response[GRUS_CMD_LEN] = {0};
+    if(grus_command(device, ":T000000#", response, GRUS_CMD_LEN, 200))
+    {
+        int parsed = sscanf(response, ":T%lf#", temperature);
+        if(parsed != 1) return false;
+        DRV_DEBUG(":T000000# -> %s = %lf", response, *temperature);
+        return true;
+    }
+    DRV_ERROR("No response");
+    return false;
+}
+
 static bool grus_set_reverse(indigo_device * device, bool enabled)
 {
     char cmd[GRUS_CMD_LEN];
-    snprintf(cmd, GRUS_CMD_LEN, ":R%06d#", enabled? 1 : 0);
+    snprintf(cmd, GRUS_CMD_LEN, ":R%06d#", enabled? 0 : 1);
     return grus_command_valid(device, cmd, 'R');
+}
+
+static bool grus_get_reverse(indigo_device * device, bool * enabled)
+{
+    uint32_t value;
+    bool result = grus_command_get_int_value(device, ":R000002#", 'R', &value);
+    *enabled = (value == 0);
+    return result;
 }
 
 static bool grus_goto_position(indigo_device * device, uint32_t position)
@@ -337,7 +360,125 @@ static bool grus_get_backlash(indigo_device * device, backlash_data * data)
     return true;
 }
 
-//TODO
+static bool grus_get_info(indigo_device * device,  char * board, char * firmware)
+{
+    if(!board || !firmware) return false;
+    char response[GRUS_CMD_LEN] = {0};
+    if(grus_command(device, ":V000000#", response, GRUS_CMD_LEN, 200))
+    {
+        int parsed = sscanf(response, ":V%s#", firmware);
+        if(parsed != 1) return false;
+        strcpy(board, "GrusFocus");
+        DRV_DEBUG(":V000000# -> %s = %s %s", response, board, firmware);
+        return true;
+    }
+    DRV_ERROR("No Response");
+    return false;
+}
+
+static bool grus_save_settings(indigo_device * device)
+{
+    return grus_command_valid(device, ":O000000#", 'O');
+}
+
+static void compensate_focus(indigo_device * device, double temp)
+{
+    int compensation;
+    double temp_difference = temp - PRIVATE_DATA->prev_temp;
+
+    if(PRIVATE_DATA->prev_temp <= NO_TEMP_READ)
+    {
+        DRV_DEBUG("Not compensating: PRIVATE_DATA->prev_temp = %f", PRIVATE_DATA->prev_temp);
+        PRIVATE_DATA->prev_temp = temp;
+        return;
+    }
+
+    if(temp <= NO_TEMP_READ || FOCUSER_POSITION_PROPERTY->state != INDIGO_OK_STATE)
+    {
+        DRV_DEBUG("Not compensating: new_temp = %f, FOCUSER_POSITION_PROPERTY->state = %d",temp, FOCUSER_POSITION_PROPERTY->state);
+        return;
+    }
+
+    if(fabs(temp_difference) >= 1.0 && fabs(temp_difference) < 100)
+    {
+        compensation = (int)(temp_difference * FOCUSER_COMPENSATION_ITEM->number.value);
+        DRV_DEBUG("Compensationg: temp_difference = %.2f, Compensation = %d, steps/degC = %.1f", temp_difference, compensation, FOCUSER_COMPENSATION_ITEM->number.value);
+    }
+    else
+    {
+        DRV_DEBUG("Not compensating (not needed): temp_difference = %f", temp_difference);
+        return;
+    }
+
+    PRIVATE_DATA->target_position = PRIVATE_DATA->current_position + compensation;
+    DRV_DEBUG("Compensation: PRIVATE_DATA->current_position = %d, PRIVATE_DATA->target_position = %d", PRIVATE_DATA->current_position, PRIVATE_DATA->target_position);
+
+    uint32_t current_position;
+    if(!grus_get_position(device, &current_position))
+        DRV_ERROR("grus_get_position(%d) failed", PRIVATE_DATA->handle);
+    PRIVATE_DATA->current_position = current_position;
+
+    if(FOCUSER_POSITION_ITEM->number.max < PRIVATE_DATA->target_position)
+        PRIVATE_DATA->target_position = FOCUSER_POSITION_ITEM->number.max;
+    else if(FOCUSER_POSITION_ITEM->number.min > PRIVATE_DATA->target_position)
+        PRIVATE_DATA->target_position = FOCUSER_POSITION_ITEM->number.min;
+
+    DRV_DEBUG("Compensation: Corrected PRIVATE_DATA->target_position = %d", PRIVATE_DATA->target_position);
+
+    if(!grus_goto_position_comp(device, PRIVATE_DATA->target_position))
+    {
+        DRV_ERROR("grus_goto_position_comp(%d, %d) faled", PRIVATE_DATA->handle, PRIVATE_DATA->target_position);
+        FOCUSER_STEPS_PROPERTY->state = INDIGO_ALERT_STATE;
+    }
+
+    PRIVATE_DATA->prev_temp = temp;
+    FOCUSER_POSITION_ITEM->number.value = PRIVATE_DATA->current_position;
+    FOCUSER_POSITION_PROPERTY->state = INDIGO_BUSY_STATE;
+    indigo_update_property(device, FOCUSER_POSITION_PROPERTY, NULL);
+    indigo_set_timer(device, 0.5, focuser_timer_handler, &PRIVATE_DATA->focuser_timer);
+}
+
+static void temperature_timer_handler(indigo_device * device)
+{
+    double temp;
+    static bool has_sensor = true;
+
+    FOCUSER_TEMPERATURE_PROPERTY->state = INDIGO_OK_STATE;
+    if(!grus_get_temperature(device, &temp))
+    {
+        DRV_ERROR("grus_get_temperature(%d, -> %f) failed", PRIVATE_DATA->handle, temp);
+        FOCUSER_TEMPERATURE_PROPERTY->state = INDIGO_ALERT_STATE;
+    }
+    else
+    {
+        FOCUSER_TEMPERATURE_ITEM->number.value = temp;
+        DRV_DEBUG("grus_get_temperature(%d, -> %f) success", PRIVATE_DATA->handle, FOCUSER_TEMPERATURE_ITEM->number.value);
+    }
+
+    if(FOCUSER_TEMPERATURE_ITEM->number.value <= NO_TEMP_READ)
+    {
+        FOCUSER_TEMPERATURE_PROPERTY->state = INDIGO_IDLE_STATE;
+        if(has_sensor)
+        {
+            DRV_LOG("The temperature sensor is not connected.");
+            indigo_update_property(device, FOCUSER_TEMPERATURE_PROPERTY, "The temperature sensor is not connected.");
+            has_sensor = false;
+        }
+    }
+    else
+    {
+        has_sensor = true;
+        indigo_update_property(device, FOCUSER_TEMPERATURE_PROPERTY, NULL);
+    }
+
+    if(FOCUSER_MODE_AUTOMATIC_ITEM->sw.value)
+        compensate_focus(device, temp);
+    else
+        PRIVATE_DATA->prev_temp = NO_TEMP_READ;
+    
+    indigo_reschedule_timer(device, 2, &(PRIVATE_DATA->temperature_timer));
+}
+
 static void focuser_connection_handler(indigo_device * device)
 {
     uint32_t position;
@@ -393,14 +534,91 @@ static void focuser_connection_handler(indigo_device * device)
                 }
                 else
                 {
+                    char board[GRUS_CMD_LEN] = "N/A";
+                    char firmware[GRUS_CMD_LEN] = "N/A";
+                    uint32_t value;
+                    if(grus_get_info(device, board, firmware))
+                    {
+                        indigo_copy_value(INFO_DEVICE_MODEL_ITEM->text.value, board);
+                        indigo_copy_value(INFO_DEVICE_FW_REVISION_ITEM->text.value, firmware);
+                        indigo_update_property(device, INFO_PROPERTY, NULL);
+                    }
+                    if(!grus_get_position(device, &position))
+                        DRV_ERROR("grus_get_position(%d) failed", PRIVATE_DATA->handle);
+                    FOCUSER_POSITION_ITEM->number.value = (double)position;
 
+                    if(!grus_get_backlash(device, &PRIVATE_DATA->backlash))
+                        DRV_ERROR("grus_get_backlash(%d) failed", PRIVATE_DATA->handle);
+                    X_BACKLASH_ENABLE_IN_ITEM->sw.value = PRIVATE_DATA->backlash.in_enable;
+                    X_BACKLASH_ENABLE_OUT_ITEM->sw.value = PRIVATE_DATA->backlash.out_enable;
+                    indigo_define_property(device, X_BACKLASH_ENABLE_PROPERTY, NULL);
+                    if(PRIVATE_DATA->backlash.in_enable)
+                    {
+                        X_BACKLASH_IN_ITEM->number.value = PRIVATE_DATA->backlash.in_value;
+                        indigo_define_property(device, X_BACKLASH_IN_PROPERTY, NULL);
+                    }
+                    if(PRIVATE_DATA->backlash.out_enable)
+                    {
+                        X_BACKLASH_OUT_ITEM->number.value = PRIVATE_DATA->backlash.out_value;
+                        indigo_define_property(device, X_BACKLASH_OUT_PROPERTY, NULL);
+                    }
+
+                    if(!grus_get_max_position(device, &PRIVATE_DATA->max_position))
+                        DRV_ERROR("grus_get_max_position(%d) failed", PRIVATE_DATA->handle);
+                    FOCUSER_LIMITS_MAX_POSITION_ITEM->number.value = (double)PRIVATE_DATA->max_position;
+
+                    update_speed_mode_switches(device);
+
+                    if(!grus_get_reverse(device, &FOCUSER_REVERSE_MOTION_ENABLED_ITEM->sw.value))
+                        DRV_ERROR("grus_get_reverse(%d) failed", PRIVATE_DATA->handle);
+                    FOCUSER_REVERSE_MOTION_DISABLED_ITEM->sw.value = !FOCUSER_REVERSE_MOTION_ENABLED_ITEM->sw.value;
+
+                    update_motor_mode_switches(device);
+                    indigo_define_property(device, X_MOTOR_MODE_PROPERTY, NULL);
+
+                    CONNECTION_PROPERTY->state = INDIGO_OK_STATE;
+                    device->gp_bits = true;
+
+                    indigo_set_timer(device, 0.5, focuser_timer_handler, &PRIVATE_DATA->focuser_timer);
+
+                    FOCUSER_MODE_PROPERTY->hidden = false;
+                    FOCUSER_TEMPERATURE_PROPERTY->hidden = false;
+                    grus_get_temperature(device, &FOCUSER_TEMPERATURE_ITEM->number.value);
+                    PRIVATE_DATA->prev_temp = FOCUSER_TEMPERATURE_ITEM->number.value;
+                    FOCUSER_COMPENSATION_PROPERTY->hidden = false;
+                    FOCUSER_COMPENSATION_ITEM->number.min = -10000;
+                    FOCUSER_COMPENSATION_ITEM->number.max = 10000;
+                    indigo_set_timer(device, 1, temperature_timer_handler, &PRIVATE_DATA->temperature_timer);
                 }
             }
         }
     }
     else
     {
+        if(device->gp_bits)
+        {
+            indigo_cancel_timer_sync(device, &PRIVATE_DATA->focuser_timer);
+            indigo_cancel_timer_sync(device, &PRIVATE_DATA->temperature_timer);
 
+            grus_stop(device);
+            grus_save_settings(device);
+
+            indigo_delete_property(device, X_MOTOR_MODE_PROPERTY, NULL);
+            indigo_delete_property(device, X_BACKLASH_ENABLE_PROPERTY, NULL);
+            indigo_delete_property(device, X_BACKLASH_IN_PROPERTY, NULL);
+            indigo_delete_property(device, X_BACKLASH_OUT_PROPERTY, NULL);
+
+            LOCK_MUTEX();
+            int res = close(PRIVATE_DATA->handle);
+            if(res < 0)
+                DRV_ERROR("close(%d) = %d", PRIVATE_DATA->handle, res);
+            else
+                DRV_DEBUG("close(%d) = %d", PRIVATE_DATA->handle, res);
+            indigo_global_unlock(device);
+            UNLOCK_MUTEX();
+            device->gp_bits = false;
+            CONNECTION_PROPERTY->state = INDIGO_OK_STATE;
+        }
     }
     indigo_focuser_change_property(device, NULL, CONNECTION_PROPERTY);
 }
