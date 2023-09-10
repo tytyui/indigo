@@ -156,7 +156,7 @@ static bool grus_command(indigo_device * device, const char * command, char * re
         long result = select(PRIVATE_DATA->handle+1, &readout, NULL, NULL, &tv);
         if(result == 0)
         {
-            DRV_ERROR("bad result: %d", result);
+            DRV_ERROR("result: %d", result);
             break;
         }
         if(result < 0)
@@ -634,6 +634,7 @@ static void focuser_connection_handler(indigo_device * device)
                     CONNECTION_PROPERTY->state = INDIGO_ALERT_STATE;
                     indigo_set_switch(CONNECTION_PROPERTY, CONNECTION_DISCONNECTED_ITEM, true);
                     indigo_update_property(device, CONNECTION_PROPERTY, NULL);
+                    return;
                 }
                 else
                 {
