@@ -153,7 +153,10 @@ static bool grus_command(indigo_device * device, const char * command, char * re
         tv.tv_usec = 100000;
         long result = select(PRIVATE_DATA->handle+1, &readout, NULL, NULL, &tv);
         if(result == 0)
+        {
+            DRV_ERROR("bad result: %d", result);
             break;
+        }
         if(result < 0)
         {
             UNLOCK_MUTEX();
@@ -369,7 +372,7 @@ static bool grus_get_info(indigo_device * device,  char * board, char * firmware
     char response[GRUS_CMD_LEN] = {0};
     if(grus_command(device, ":V000000#", response, GRUS_CMD_LEN, 200))
     {
-        int parsed = sscanf(response, ":V%s#", firmware);
+        int parsed = sscanf(response, ":V%6s#", firmware);
         if(parsed != 1) return false;
         memcpy(board, "GrusFocus", GRUS_CMD_LEN);
         DRV_DEBUG(":V000000# -> %s = %s %s", response, board, firmware);
